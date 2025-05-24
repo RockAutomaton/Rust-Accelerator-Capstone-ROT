@@ -36,8 +36,6 @@ embassy-net = { version = "0.7.0", features = [
     "proto-ipv4",
 ] }
 
-dotenvy = "0.15.7"
-
 cyw43 = { version = "0.3.0", features = ["defmt"] }
 cyw43-pio = { version = "0.4.0", features = ["defmt"] }
 static_cell = "1.2"
@@ -51,6 +49,9 @@ panic-probe = { version = "1", features = ["print-defmt"] }
 
 
 heapless = "0.8"
+
+[build-dependencies]
+dotenvy = "0.15"
 
 # but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
 # sparkfun-pro-micro-rp2040 = "0.8"

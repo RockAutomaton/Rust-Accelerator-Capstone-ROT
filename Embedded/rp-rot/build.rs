@@ -14,6 +14,34 @@ use std::io::Write;
 use std::path::PathBuf;
 
 fn main() {
+
+    let _ = dotenvy::dotenv();
+
+    // WiFi Network - required
+    let wifi_network = env::var("WIFI_NETWORK").unwrap_or_else(|_| {
+        println!("cargo:warning=WIFI_NETWORK not set, using default");
+        "YOUR_WIFI_SSID".to_string()
+    });
+
+    // WiFi Password - required
+    let wifi_password = env::var("WIFI_PASSWORD").unwrap_or_else(|_| {
+        println!("cargo:warning=WIFI_PASSWORD not set, using default");
+        "YOUR_WIFI_PASSWORD".to_string()
+    });
+
+    // Test IP - optional
+    let test_ip = env::var("TEST_IP").unwrap_or_else(|_| "192.168.43.100".to_string());
+
+    // Pass to compiler as constants
+    println!("cargo:rustc-env=WIFI_NETWORK={}", wifi_network);
+    println!("cargo:rustc-env=WIFI_PASSWORD={}", wifi_password);
+    println!("cargo:rustc-env=TEST_IP={}", test_ip);
+
+    // Rebuild if .env file changes
+    println!("cargo:rerun-if-changed=.env");
+    println!("cargo:rerun-if-env-changed=WIFI_NETWORK");
+    println!("cargo:rerun-if-env-changed=WIFI_PASSWORD");
+    println!("cargo:rerun-if-env-changed=TEST_IP");
     // Put `memory.x` in our output directory and ensure it's
     // on the linker search path.
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());

@@ -6,8 +6,7 @@ use cyw43::JoinOptions;
 use cyw43_pio::{PioSpi, DEFAULT_CLOCK_DIVIDER};
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_net::{Config, StackResources, Ipv4Address};
-use embassy_net::tcp::TcpSocket;
+use embassy_net::{Config, StackResources};
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
@@ -18,12 +17,9 @@ use rand_core::RngCore;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
-// Import WiFi credentials from separate file
-mod wifi_credentials;
-use wifi_credentials::*;
-
-// Convert IP array to Ipv4Address
-const TEST_IP_ADDR: Ipv4Address = Ipv4Address::new(TEST_IP[0], TEST_IP[1], TEST_IP[2], TEST_IP[3]);
+// WiFi credentials from build-time environment variables
+const WIFI_NETWORK: &str = env!("WIFI_NETWORK");
+const WIFI_PASSWORD: &str = env!("WIFI_PASSWORD");
 
 bind_interrupts!(struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
