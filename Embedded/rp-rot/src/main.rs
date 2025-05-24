@@ -1,67 +1,60 @@
-//! Blinks the LED on a Pico board
-//!
-//! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
+//! Embassy-based blinky with WiFi capability
 #![no_std]
 #![no_main]
 
-use bsp::entry;
 use defmt::*;
-use defmt_rtt as _;
-use embedded_hal::digital::OutputPin;
-use panic_probe as _;
+use embassy_executor::Spawner;
+use embassy_rp::gpio::{Level, Output};
+use embassy_time::{Duration, Timer};
+use {defmt_rtt as _, panic_probe as _};
 
+// WiFi-related imports (you'll use these when adding WiFi)
+// use cyw43_pio::PioSpi;
+// use embassy_rp::bind_interrupts;
+// use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_25, PIO0};
+// use embassy_rp::pio::{InterruptHandler, Pio};
 
-use rp_pico as bsp;
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
+    info!("Embassy initialized!");
 
-use bsp::hal::{
-    clocks::{init_clocks_and_plls, Clock},
-    pac,
-    sio::Sio,
-    watchdog::Watchdog,
-};
+    // Spawn the blinky task
+    spawner.spawn(blink_task(p.PIN_16)).unwrap();
+    
+    // Spawn WiFi task when ready
+    // spawner.spawn(wifi_task()).unwrap();
 
-#[entry]
-fn main() -> ! {
-    info!("Program start");
-    let mut pac = pac::Peripherals::take().unwrap();
-    let core = pac::CorePeripherals::take().unwrap();
-    let mut watchdog = Watchdog::new(pac.WATCHDOG);
-    let sio = Sio::new(pac.SIO);
-
-    // External high-speed crystal on the pico board is 12Mhz
-    let external_xtal_freq_hz = 12_000_000u32;
-    let clocks = init_clocks_and_plls(
-        external_xtal_freq_hz,
-        pac.XOSC,
-        pac.CLOCKS,
-        pac.PLL_SYS,
-        pac.PLL_USB,
-        &mut pac.RESETS,
-        &mut watchdog,
-    )
-    .ok()
-    .unwrap();
-
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
-    let pins = bsp::Pins::new(
-        pac.IO_BANK0,
-        pac.PADS_BANK0,
-        sio.gpio_bank0,
-        &mut pac.RESETS,
-    );
-
-
-    let mut led_pin = pins.gpio16.into_push_pull_output();
-
+    // Keep the main task alive
     loop {
-        info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        info!("off!");
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        Timer::after(Duration::from_secs(1)).await;
     }
 }
 
-// End of file
+#[embassy_executor::task]
+async fn blink_task(pin: embassy_rp::peripherals::PIN_16) {
+    let mut led = Output::new(pin, Level::Low);
+    
+    loop {
+        info!("LED on!");
+        led.set_high();
+        Timer::after(Duration::from_millis(500)).await;
+        
+        info!("LED off!");
+        led.set_low();
+        Timer::after(Duration::from_millis(500)).await;
+    }
+}
+
+// WiFi task template - uncomment and modify when ready
+/*
+#[embassy_executor::task]
+async fn wifi_task() {
+    // WiFi initialization code will go here
+    info!("WiFi task started");
+    loop {
+        Timer::after(Duration::from_secs(10)).await;
+        info!("WiFi task tick");
+    }
+}
+*/
