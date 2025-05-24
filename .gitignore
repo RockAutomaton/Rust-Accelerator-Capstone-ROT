@@ -34,3 +34,5 @@ rust-project.json
 !.vscode/tasks.json
 !.vscode/extensions.json
 !.vscode/settings.json
+Embedded/rp-rot/src/wifi_credentials.rs
+Embedded/rp-rot/.env
