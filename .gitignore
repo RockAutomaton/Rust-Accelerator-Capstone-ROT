@@ -36,3 +36,4 @@ rust-project.json
 !.vscode/settings.json
 Embedded/rp-rot/src/wifi_credentials.rs
 Embedded/rp-rot/.env
+Cloud/device-comms/.env
