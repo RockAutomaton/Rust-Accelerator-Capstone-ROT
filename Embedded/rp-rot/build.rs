@@ -29,13 +29,16 @@ fn main() {
         "YOUR_WIFI_PASSWORD".to_string()
     });
 
-    // Test IP - optional
-    let test_ip = env::var("TEST_IP").unwrap_or_else(|_| "192.168.43.100".to_string());
+    // Telemetry Host - required
+    let telemetry_host = env::var("TELEMETRY_HOST").unwrap_or_else(|_| {
+        println!("cargo:warning=TELEMETRY_HOST not set, using default");
+        "YOUR_TELEMETRY_HOST".to_string()
+    });
 
     // Pass to compiler as constants
     println!("cargo:rustc-env=WIFI_NETWORK={}", wifi_network);
     println!("cargo:rustc-env=WIFI_PASSWORD={}", wifi_password);
-    println!("cargo:rustc-env=TEST_IP={}", test_ip);
+    println!("cargo:rustc-env=TELEMETRY_HOST={}", telemetry_host);
 
     // Rebuild if .env file changes
     println!("cargo:rerun-if-changed=.env");

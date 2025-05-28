@@ -34,6 +34,7 @@ embassy-net = { version = "0.7.0", features = [
     "udp",
     "dhcpv4",
     "proto-ipv4",
+    "dns",
 ] }
 
 cyw43 = { version = "0.3.0", features = ["defmt"] }
@@ -49,6 +50,9 @@ panic-probe = { version = "1", features = ["print-defmt"] }
 
 
 heapless = "0.8"
+embedded-io = "0.6.1"
+embedded-io-async = "0.6.1"
+
 
 [build-dependencies]
 dotenvy = "0.15"
