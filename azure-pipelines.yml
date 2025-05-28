@@ -11,7 +11,7 @@ resources:
 variables:
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'b0612590-f696-43d8-85d7-a0d49332a83f'
-  imageRepository: 'devicecomms'
+  imageRepository: 'device-comms'
   containerRegistry: 'rotpoccr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Cloud/device-comms/Dockerfile'
   tag: '$(Build.BuildId)'
