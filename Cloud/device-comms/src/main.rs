@@ -3,6 +3,7 @@
 mod routes;
 
 use routes::ingest_telemetry;
+use routes::read_telemetry;
 
 use dotenvy::dotenv;
 use rocket::{
@@ -30,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .merge(("address", "0.0.0.0")))
             .attach(cors)
         .mount("/", routes![hello])
-        .mount("/iot/data", routes![ingest_telemetry::ingest]);
+        .mount("/iot/data", routes![ingest_telemetry::ingest, read_telemetry::read]);
 
     println!("listening on 0.0.0.0:8000");
     rocket.launch().await?;
