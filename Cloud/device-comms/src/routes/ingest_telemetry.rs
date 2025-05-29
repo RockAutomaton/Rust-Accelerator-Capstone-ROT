@@ -32,7 +32,7 @@ async fn insert_telemetry(telemetry: Json<Telemetry>) -> Result<(), Box<dyn std:
     let id = format!("{}-{}", document.device_id, timestamp);
 
     let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT").unwrap();
-    let credential = DefaultAzureCredential::new().unwrap();
+    let credential = DefaultAzureCredential::new().unwrap(); 
     let cosmos_client = CosmosClient::new(&cosmos_endpoint, credential, None).unwrap();
     let database_name =
         std::env::var("COSMOS_DATABASE").unwrap_or_else(|_| "device-data".to_string());

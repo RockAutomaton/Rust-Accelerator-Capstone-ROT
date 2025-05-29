@@ -1,26 +1,27 @@
-# Start with image that has the Rust toolchain installed
-FROM rust:1.87-alpine AS chef
+# Build stage
+FROM rust:1.87 AS chef
 USER root
-# Add cargo-chef to cache dependencies
-RUN apk add --no-cache musl-dev && cargo install cargo-chef --locked
+RUN apt-get update && apt-get install -y pkg-config libssl-dev
+RUN cargo install cargo-chef --locked
 WORKDIR /app
 
 FROM chef AS planner
 COPY . .
-# Capture info needed to build dependencies
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
-# Build dependencies - this is the caching Docker layer!
 RUN cargo chef cook --release --recipe-path recipe.json
-# Build application
 COPY . .
 RUN cargo build --release
 
-# We do not need the Rust toolchain to run the binary!
-FROM debian:buster-slim AS runtime
+# Runtime with modern Ubuntu
+FROM ubuntu:22.04 AS runtime
 WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/device-comms /usr/local/bin
 
 EXPOSE 8000
