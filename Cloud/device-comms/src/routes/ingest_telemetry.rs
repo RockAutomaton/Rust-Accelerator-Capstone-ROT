@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
+use azure_core::credentials::Secret;
 use rocket::serde::json::Json;
 use serde::{Deserialize, Serialize};
 
 use azure_data_cosmos::CosmosClient;
-use azure_identity::DefaultAzureCredential;
+use azure_identity::{ClientSecretCredential};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Telemetry {
@@ -31,8 +32,12 @@ async fn insert_telemetry(telemetry: Json<Telemetry>) -> Result<(), Box<dyn std:
     // Create unique ID
     let id = format!("{}-{}", document.device_id, timestamp);
 
+    let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap();
+    let client_id = std::env::var("AZURE_CLIENT_ID").unwrap();
+    let client_secret = Secret::new(std::env::var("AZURE_CLIENT_SECRET").unwrap());
+
     let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT").unwrap();
-    let credential = DefaultAzureCredential::new().unwrap(); 
+    let credential = ClientSecretCredential::new(&tenant_id, client_id, client_secret, None)?;
     let cosmos_client = CosmosClient::new(&cosmos_endpoint, credential, None).unwrap();
     let database_name =
         std::env::var("COSMOS_DATABASE").unwrap_or_else(|_| "device-data".to_string());
