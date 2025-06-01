@@ -7,6 +7,9 @@ param location string = 'UK South'
 @description('The Log Analytics Workspace customer ID for app logs')
 param logAnalyticsCustomerId string
 
+@description('The Log Analytics Workspace shared key for app logs')
+param logAnalyticsSharedKey string
+
 @description('Whether to enable zone redundancy')
 param zoneRedundant bool = false
 
@@ -27,6 +30,7 @@ resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2025-01-01' 
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalyticsCustomerId
+        sharedKey: logAnalyticsSharedKey
       }
     }
     zoneRedundant: zoneRedundant
