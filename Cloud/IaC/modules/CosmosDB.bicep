@@ -143,63 +143,6 @@ resource telemetryContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/
   }
 }
 
-// Built-in role definitions
-resource sqlDataReaderRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-12-01-preview' = {
-  parent: cosmosDbAccount
-  name: '00000000-0000-0000-0000-000000000001'
-  properties: {
-    roleName: 'Cosmos DB Built-in Data Reader'
-    type: 'BuiltInRole'
-    assignableScopes: [
-      cosmosDbAccount.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/executeQuery'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/readChangeFeed'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read'
-        ]
-        notDataActions: []
-      }
-    ]
-  }
-}
-
-resource sqlDataContributorRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-12-01-preview' = {
-  parent: cosmosDbAccount
-  name: '00000000-0000-0000-0000-000000000002'
-  properties: {
-    roleName: 'Cosmos DB Built-in Data Contributor'
-    type: 'BuiltInRole'
-    assignableScopes: [
-      cosmosDbAccount.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
-        ]
-        notDataActions: []
-      }
-    ]
-  }
-}
-
-// Assign contributor roles to specified principals
-resource contributorRoleAssignments 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-12-01-preview' = [for (principalId, i) in contributorPrincipalIdsArray: {
-  parent: cosmosDbAccount
-  name: '${i}'
-  properties: {
-    roleDefinitionId: sqlDataContributorRole.id
-    principalId: principalId
-    scope: cosmosDbAccount.id
-  }
-}]
-
 // Outputs
 output cosmosDbAccountId string = cosmosDbAccount.id
 output cosmosDbAccountName string = cosmosDbAccount.name
