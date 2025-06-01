@@ -31,6 +31,8 @@ use drivers::{Led, WiFiDriver};
 use network::NetworkStack;
 use tasks::{cyw43_task, network_task, telemetry_task, TelemetryTaskConfig};
 
+use embassy_rp::gpio::AnyPin;
+
 // WiFi credentials from build-time environment variables
 const WIFI_NETWORK: &str = env!("WIFI_NETWORK");
 const WIFI_PASSWORD: &str = env!("WIFI_PASSWORD");
@@ -44,7 +46,8 @@ async fn main(spawner: Spawner) {
 
     // Initialize LED
     info!("Initializing LED...");
-    let mut led = Output::new(p.PIN_16, Level::Low);
+    let mut led = Led::new(AnyPin::from(p.PIN_16));
+    led.error_blink().await; // Startup pattern
 
     // Initialize WiFi
     info!("Initializing WiFi...");
@@ -105,6 +108,7 @@ async fn main(spawner: Spawner) {
         {
             Ok(_) => {
                 info!("WiFi connected successfully!");
+                led.success_blink().await;
                 break;
             }
             Err(err) => {
@@ -116,10 +120,7 @@ async fn main(spawner: Spawner) {
                         MAX_WIFI_RETRIES
                     );
                     loop {
-                        led.set_high();
-                        Timer::after(Duration::from_millis(500)).await;
-                        led.set_low();
-                        Timer::after(Duration::from_millis(500)).await;
+                        led.error_blink().await;
                     }
                 }
                 Timer::after(Duration::from_secs(5)).await;
@@ -138,10 +139,7 @@ async fn main(spawner: Spawner) {
     if !stack.is_config_up() {
         error!("DHCP failed - no IP address assigned");
         loop {
-            led.set_high();
-            Timer::after(Duration::from_millis(500)).await;
-            led.set_low();
-            Timer::after(Duration::from_millis(500)).await;
+            led.error_blink().await;
         }
     }
     info!("DHCP is now up!");
@@ -167,9 +165,6 @@ async fn main(spawner: Spawner) {
 
     // Main loop - blink LED
     loop {
-        led.set_high();
-        Timer::after(Duration::from_millis(500)).await;
-        led.set_low();
-        Timer::after(Duration::from_millis(500)).await;
+        led.blink().await;
     }
 }
