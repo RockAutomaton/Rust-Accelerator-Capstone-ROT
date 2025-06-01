@@ -101,78 +101,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2025-03-01-pr
   }
 }
 
-resource repositoriesAdmin 'Microsoft.ContainerRegistry/registries/scopeMaps@2025-03-01-preview' = {
-  parent: containerRegistry
-  name: '_repositories_admin'
-  properties: {
-    description: 'Can perform all read, write and delete operations on the registry'
-    actions: [
-      'repositories/*/metadata/read'
-      'repositories/*/metadata/write'
-      'repositories/*/content/read'
-      'repositories/*/content/write'
-      'repositories/*/content/delete'
-    ]
-  }
-}
-
-resource repositoriesPull 'Microsoft.ContainerRegistry/registries/scopeMaps@2025-03-01-preview' = {
-  parent: containerRegistry
-  name: '_repositories_pull'
-  properties: {
-    description: 'Can pull any repository of the registry'
-    actions: [
-      'repositories/*/content/read'
-    ]
-  }
-}
-
-resource repositoriesPullMetadataRead 'Microsoft.ContainerRegistry/registries/scopeMaps@2025-03-01-preview' = {
-  parent: containerRegistry
-  name: '_repositories_pull_metadata_read'
-  properties: {
-    description: 'Can perform all read operations on the registry'
-    actions: [
-      'repositories/*/content/read'
-      'repositories/*/metadata/read'
-    ]
-  }
-}
-
-resource repositoriesPush 'Microsoft.ContainerRegistry/registries/scopeMaps@2025-03-01-preview' = {
-  parent: containerRegistry
-  name: '_repositories_push'
-  properties: {
-    description: 'Can push to any repository of the registry'
-    actions: [
-      'repositories/*/content/read'
-      'repositories/*/content/write'
-    ]
-  }
-}
-
-resource repositoriesPushMetadataWrite 'Microsoft.ContainerRegistry/registries/scopeMaps@2025-03-01-preview' = {
-  parent: containerRegistry
-  name: '_repositories_push_metadata_write'
-  properties: {
-    description: 'Can perform all read and write operations on the registry'
-    actions: [
-      'repositories/*/metadata/read'
-      'repositories/*/metadata/write'
-      'repositories/*/content/read'
-      'repositories/*/content/write'
-    ]
-  }
-}
-
 // Outputs
 output registryId string = containerRegistry.id
 output registryName string = containerRegistry.name
 output registryLoginServer string = containerRegistry.properties.loginServer
-output adminUsername string = containerRegistry.listCredentials().username
-output adminPassword string = containerRegistry.listCredentials().passwords[0].value
-output repositoriesAdminScopeMapId string = repositoriesAdmin.id
-output repositoriesPullScopeMapId string = repositoriesPull.id
-output repositoriesPullMetadataReadScopeMapId string = repositoriesPullMetadataRead.id
-output repositoriesPushScopeMapId string = repositoriesPush.id
-output repositoriesPushMetadataWriteScopeMapId string = repositoriesPushMetadataWrite.id
