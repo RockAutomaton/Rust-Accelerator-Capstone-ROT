@@ -1,4 +1,4 @@
-using '../main.bicep'
+using './main.bicep'
 
 param secretKey = string(readEnvironmentVariable('SECRET_KEY'))
 param azureClientSecret = string(readEnvironmentVariable('AZURE_CLIENT_SECRET'))
