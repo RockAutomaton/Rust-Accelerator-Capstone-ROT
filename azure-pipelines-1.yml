@@ -19,6 +19,6 @@ steps:
     resourceGroupName: 'rot-poc2'
     location: 'UK South'
     templateLocation: 'Linked artifact'
-    csmFile: '$(Build.SourcesDirectory)/Cloud/IaC/rotpoc2.bicepparam'
+    csmFile: '$(Build.SourcesDirectory)/Cloud/IaC/main.bicep'
     overrideParameters: '-secretKey $(SECRET_KEY) -azureClientSecret $(AZURE_CLIENT_SECRET) -azureTenantId $(AZURE_TENANT_ID)  -azureClientId $(AZURE_CLIENT_ID) -contributorPrincipalIds $(CONTRIBUTOR_PRINCIPAL_IDS)'
     deploymentMode: 'Incremental'
