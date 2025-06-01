@@ -68,7 +68,6 @@ module containerAppEnvironment 'modules/ContainerAppEnvironment.bicep' = {
     enableMtls: false
     enablePeerTrafficEncryption: false
     workloadProfileType: 'Consumption'
-    logAnalyticsSharedKey: logAnalytics.outputs.workspaceSharedKey
   }
 }
 
