@@ -11,13 +11,6 @@ pool:
 
 steps:
 - task: AzureResourceManagerTemplateDeployment@3
-  
-  env:
-    SECRET_KEY: $(SECRET_KEY)
-    AZURE_CLIENT_SECRET: $(AZURE_CLIENT_SECRET)
-    AZURE_TENANT_ID: $(AZURE_TENANT_ID) 
-    AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-    CONTRIBUTOR_PRINCIPAL_IDS: $(CONTRIBUTOR_PRINCIPAL_IDS)
   inputs:
     deploymentScope: 'Resource Group'
     azureResourceManagerConnection: 'Lab and PoCs(ccbc54ce-61f8-463d-b05f-a05d625c3567)'
@@ -27,4 +20,5 @@ steps:
     location: 'UK South'
     templateLocation: 'Linked artifact'
     csmFile: '$(Build.SourcesDirectory)/Cloud/IaC/rotpoc2.bicepparam'
+    overrideParameters: '-secretKey $(SECRET_KEY) -azureClientSecret $(AZURE_CLIENT_SECRET) -azureTenantId $(AZURE_TENANT_ID)  -azureClientId $(AZURE_CLIENT_ID) -contributorPrincipalIds $(CONTRIBUTOR_PRINCIPAL_IDS)'
     deploymentMode: 'Incremental'
