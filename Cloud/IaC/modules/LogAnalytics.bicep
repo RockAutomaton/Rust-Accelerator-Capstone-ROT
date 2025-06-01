@@ -19,10 +19,10 @@ param enablePublicNetworkAccessForQuery bool = true
 @description('The daily quota in GB for the Log Analytics Workspace. Use -1 for unlimited.')
 param dailyQuotaGb int = -1
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: workspaceName
   location: location
-    identity: {
+  identity: {
     type: 'SystemAssigned'
   }
   properties: {
@@ -43,8 +43,8 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2025-02
   }
 }
 
-
 // Outputs
 output workspaceId string = logAnalyticsWorkspace.id
 output workspaceName string = logAnalyticsWorkspace.name
 output workspaceCustomerId string = logAnalyticsWorkspace.properties.customerId
+output workspaceSharedKey string = logAnalyticsWorkspace.listKeys().primarySharedKey

@@ -7,6 +7,10 @@ param location string = 'UK South'
 @description('The Log Analytics Workspace customer ID for app logs')
 param logAnalyticsCustomerId string
 
+@description('The Log Analytics Workspace shared key for app logs')
+@secure()
+param logAnalyticsSharedKey string
+
 @description('Whether to enable zone redundancy')
 param zoneRedundant bool = false
 
@@ -19,17 +23,16 @@ param enablePeerTrafficEncryption bool = false
 @description('The workload profile type')
 param workloadProfileType string = 'Consumption'
 
-resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2025-01-01' = {
+resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: environmentName
   location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
+
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalyticsCustomerId
+        sharedKey: logAnalyticsSharedKey
       }
     }
     zoneRedundant: zoneRedundant
@@ -60,4 +63,3 @@ output environmentId string = containerAppEnvironment.id
 output environmentName string = containerAppEnvironment.name
 output environmentDefaultDomain string = containerAppEnvironment.properties.defaultDomain
 output environmentStaticIp string = containerAppEnvironment.properties.staticIp
-output environmentSystemAssignedIdentityPrincipalId string = containerAppEnvironment.identity.principalId
