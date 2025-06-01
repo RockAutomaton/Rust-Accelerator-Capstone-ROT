@@ -63,7 +63,7 @@ module containerAppEnvironment 'modules/ContainerAppEnvironment.bicep' = {
   params: {
     environmentName: '${namePrefix}-app-env'
     location: location
-    logAnalyticsCustomerId: logAnalytics.outputs.workspaceId
+    logAnalyticsCustomerId: logAnalytics.outputs.workspaceCustomerId
     zoneRedundant: false
     enableMtls: false
     enablePeerTrafficEncryption: false
