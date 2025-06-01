@@ -60,8 +60,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2024-12-01-previ
     enablePartitionMerge: false
     enablePerRegionPerPartitionAutoscale: false
     enableBurstCapacity: false
-    enablePriorityBasedExecution: false
-    defaultPriorityLevel: 'High'
+
     minimalTlsVersion: 'Tls12'
     consistencyPolicy: {
       defaultConsistencyLevel: 'Session'
@@ -71,7 +70,6 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2024-12-01-previ
     locations: [
       {
         locationName: location
-        failoverPriority: 0
         isZoneRedundant: false
       }
     ]

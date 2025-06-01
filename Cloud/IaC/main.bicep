@@ -39,7 +39,7 @@ module cosmosDb 'modules/CosmosDB.bicep' = {
 module containerRegistry 'modules/ContainerRegistry.bicep' = {
   name: 'deployContainerRegistry'
   params: {
-    registryName: '${namePrefix}-registry'
+    registryName: 'rotpoc2registry'
     location: location
     skuName: 'Basic'
     adminUserEnabled: false
