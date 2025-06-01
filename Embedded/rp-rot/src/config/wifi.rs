@@ -1,5 +1,3 @@
-use defmt::*;
-
 #[derive(Debug, Clone)]
 pub struct WiFiConfig {
     pub network: &'static str,

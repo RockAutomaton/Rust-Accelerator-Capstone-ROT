@@ -12,5 +12,6 @@ pub enum WiFiError {
     JoinFailed(u32),
     MaxRetriesExceeded,
     InitFailed,
-    InvalidCredentials,
+    Join,
+    Timeout
 }

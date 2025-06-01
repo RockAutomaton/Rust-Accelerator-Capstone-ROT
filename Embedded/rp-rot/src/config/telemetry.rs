@@ -1,18 +1,7 @@
-use defmt::*;
+pub struct TelemetryConfig;
 
-#[derive(Debug, Clone)]
-pub struct TelemetryConfig {
-    pub host: &'static str,
-    pub port: u16,
-    pub path: &'static str,
-}
-
-impl Default for TelemetryConfig {
-    fn default() -> Self {
-        Self {
-            host: env!("TELEMETRY_HOST"),
-            port: 80,
-            path: "/iot/data/ingest",
-        }
-    }
+impl TelemetryConfig {
+    pub const HOST: &'static str = env!("TELEMETRY_HOST");
+    pub const PORT: u16 = 80;
+    pub const PATH: &'static str = "/iot/data/ingest";
 }

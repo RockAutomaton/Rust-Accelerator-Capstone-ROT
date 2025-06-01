@@ -1,6 +1,4 @@
-use crate::config::WiFiConfig;
-use crate::error::WiFiError;
-use cyw43::{JoinOptions, PowerManagementMode};
+use cyw43::{Control, JoinOptions, PowerManagementMode};
 use cyw43_pio::{PioSpi, DEFAULT_CLOCK_DIVIDER};
 use defmt::*;
 use embassy_rp::gpio::{Level, Output};
@@ -9,6 +7,9 @@ use embassy_rp::pio::{InterruptHandler, Pio};
 use embassy_rp::{bind_interrupts, peripherals::*};
 use embassy_time::{Duration, Timer};
 use static_cell::StaticCell;
+
+use crate::config::WiFiConfig;
+use crate::error::WiFiError;
 
 bind_interrupts!(pub struct Irqs {
     PIO0_IRQ_0 => InterruptHandler<PIO0>;
@@ -24,19 +25,45 @@ impl WiFiDriver {
         pin_dio: PIN_24,
         pin_clk: PIN_29,
         dma_ch0: DMA_CH0,
-    ) -> (
-        cyw43::NetDriver<'static>,
-        cyw43::Control<'static>,
-        cyw43::Runner<'static, Output<'static>, PioSpi<'static, PIO0, 0, DMA_CH0>>,
-    ) {
-        info!("Initializing CYW43 WiFi hardware...");
+    ) -> Result<
+        (
+            cyw43::NetDriver<'static>,
+            Control<'static>,
+            cyw43::Runner<'static, Output<'static>, PioSpi<'static, PIO0, 0, DMA_CH0>>,
+        ),
+        WiFiError,
+    > {
+        info!("Starting WiFi initialization...");
 
+        // Load firmware with verification
+        info!("Loading WiFi firmware...");
         let fw = include_bytes!("../../cyw43-firmware/43439A0.bin");
         let clm = include_bytes!("../../cyw43-firmware/43439A0_clm.bin");
 
+        if fw.is_empty() || clm.is_empty() {
+            error!("Firmware files are empty!");
+            return Err(WiFiError::InitFailed);
+        }
+        info!(
+            "Firmware loaded: fw size={}, clm size={}",
+            fw.len(),
+            clm.len()
+        );
+
+        // Initialize pins with delays
+        info!("Initializing power pin...");
         let pwr = Output::new(pin_pwr, Level::Low);
+        Timer::after(Duration::from_millis(100)).await;
+
+        info!("Initializing CS pin...");
         let cs = Output::new(pin_cs, Level::High);
+        Timer::after(Duration::from_millis(100)).await;
+
+        info!("Initializing PIO...");
         let mut pio = Pio::new(pio0, Irqs);
+        Timer::after(Duration::from_millis(100)).await;
+
+        info!("Initializing SPI...");
         let spi = PioSpi::new(
             &mut pio.common,
             pio.sm0,
@@ -47,28 +74,37 @@ impl WiFiDriver {
             pin_clk,
             dma_ch0,
         );
+        Timer::after(Duration::from_millis(100)).await;
 
+        info!("Creating WiFi state...");
         static STATE: StaticCell<cyw43::State> = StaticCell::new();
         let state = STATE.init(cyw43::State::new());
+        Timer::after(Duration::from_millis(100)).await;
 
+        info!("Creating WiFi driver...");
         let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
+        Timer::after(Duration::from_millis(500)).await;
+
+        info!("Initializing WiFi control...");
         control.init(clm).await;
+        Timer::after(Duration::from_millis(500)).await;
+
+        info!("Setting power management mode...");
         control
             .set_power_management(PowerManagementMode::PowerSave)
             .await;
+        Timer::after(Duration::from_millis(500)).await;
 
-        // Give the CYW43 some time to stabilize
-        Timer::after(Duration::from_secs(2)).await;
-
-        (net_device, control, runner)
+        info!("WiFi initialization complete");
+        Ok((net_device, control, runner))
     }
 
     pub async fn connect_with_retry(
-        control: &mut cyw43::Control<'_>,
+        control: &mut Control<'_>,
         config: &WiFiConfig,
     ) -> Result<(), WiFiError> {
         if config.network.is_empty() || config.password.is_empty() {
-            return Err(WiFiError::InvalidCredentials);
+            return Err(WiFiError::Join);
         }
 
         let mut retry_count = 0;
@@ -104,7 +140,7 @@ impl WiFiDriver {
                             "Failed to connect to WiFi after {} attempts",
                             config.max_retries
                         );
-                        return Err(WiFiError::MaxRetriesExceeded);
+                        return Err(WiFiError::Timeout);
                     }
 
                     Timer::after(Duration::from_secs(config.retry_delay_secs)).await;

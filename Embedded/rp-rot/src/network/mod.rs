@@ -1,4 +1,5 @@
 use defmt::{error, info};
+use embassy_executor::Spawner;
 use embassy_net::{Config, Stack, StackResources};
 use embassy_rp::clocks::RoscRng;
 use embassy_time::{Duration, Timer};
@@ -8,23 +9,25 @@ use static_cell::StaticCell;
 pub struct NetworkStack;
 
 impl NetworkStack {
-    pub fn init(
+    pub async fn init(
         net_device: cyw43::NetDriver<'static>,
-    ) -> (
-        Stack<'static>,
-        embassy_net::Runner<'static, cyw43::NetDriver<'static>>,
-    ) {
+        seed: u64,
+        spawner: &Spawner,
+    ) -> Stack<'static> {
+        info!("Initializing network stack...");
         let config = Config::dhcpv4(Default::default());
-        let mut rng = RoscRng;
-        let seed = rng.next_u64();
 
         static RESOURCES: StaticCell<StackResources<5>> = StaticCell::new();
-        embassy_net::new(
+        let (stack, runner) = embassy_net::new(
             net_device,
             config,
             RESOURCES.init(StackResources::new()),
             seed,
-        )
+        );
+
+        spawner.spawn(network_task(runner)).unwrap();
+        info!("Network stack initialized");
+        stack
     }
 
     pub async fn setup_and_wait(stack: &Stack<'static>) -> Result<(), ()> {
@@ -34,6 +37,7 @@ impl NetworkStack {
         while !stack.is_config_up() && dhcp_timeout > 0 {
             Timer::after(Duration::from_secs(1)).await;
             dhcp_timeout -= 1;
+            info!("Waiting for DHCP... {} seconds remaining", dhcp_timeout);
         }
 
         if !stack.is_config_up() {
@@ -42,17 +46,39 @@ impl NetworkStack {
         }
         info!("DHCP is now up!");
 
-        // Wait for link up
+        // Wait for link up with timeout
         info!("Waiting for link up...");
-        while !stack.is_link_up() {
+        let mut link_timeout = 10; // 10 seconds timeout
+        while !stack.is_link_up() && link_timeout > 0 {
             Timer::after(Duration::from_millis(500)).await;
+            link_timeout -= 1;
+            info!("Waiting for link up... {} seconds remaining", link_timeout);
+        }
+
+        if !stack.is_link_up() {
+            error!("Link failed to come up");
+            return Err(());
         }
         info!("Link is up!");
 
-        // Wait for stack to be up
+        // Wait for stack to be up with timeout
         info!("Waiting for stack to be up...");
-        stack.wait_config_up().await;
+        let mut stack_timeout = 10; // 10 seconds timeout
+        while !stack.is_config_up() && stack_timeout > 0 {
+            Timer::after(Duration::from_secs(1)).await;
+            stack_timeout -= 1;
+            info!("Waiting for stack... {} seconds remaining", stack_timeout);
+        }
+
+        if !stack.is_config_up() {
+            error!("Stack failed to come up");
+            return Err(());
+        }
         info!("Stack is up!");
+
+        // Additional wait to ensure everything is stable
+        Timer::after(Duration::from_secs(2)).await;
+        info!("Network stack is ready!");
 
         Ok(())
     }
@@ -78,4 +104,12 @@ impl NetworkInfo {
             self.is_config_up, self.is_link_up
         );
     }
+}
+
+#[embassy_executor::task]
+async fn network_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>) -> ! {
+    info!("Starting network runner task");
+    runner.run().await;
+    info!("This should never be reached");
+    loop {}
 }
