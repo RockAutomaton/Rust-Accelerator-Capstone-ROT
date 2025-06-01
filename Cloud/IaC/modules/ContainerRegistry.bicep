@@ -60,7 +60,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2025-03-01-pr
   location: location
   sku: {
     name: skuName
-    tier: skuName
   }
   properties: {
     adminUserEnabled: adminUserEnabled
