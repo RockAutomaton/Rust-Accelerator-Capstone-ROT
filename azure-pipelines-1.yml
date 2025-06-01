@@ -26,6 +26,5 @@ steps:
     resourceGroupName: 'rot-poc2'
     location: 'UK South'
     templateLocation: 'Linked artifact'
-    csmFile: './Cloud/IaC/rotpoc2.bicepparam'
+    csmFile: '$(Build.SourcesDirectory)/Cloud/IaC/rotpoc2.bicepparam'
     deploymentMode: 'Incremental'
-
