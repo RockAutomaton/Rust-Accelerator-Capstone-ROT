@@ -23,7 +23,9 @@ param backupIntervalInMinutes int = 1440
 param backupRetentionIntervalInHours int = 48
 
 @description('The principal IDs that should have contributor access')
-param contributorPrincipalIds array = []
+param contributorPrincipalIds string
+
+var contributorPrincipalIdsArray = split(contributorPrincipalIds, ',')
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2024-12-01-preview' = {
   name: cosmosDbAccountName
@@ -190,7 +192,7 @@ resource sqlDataContributorRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDe
 }
 
 // Assign contributor roles to specified principals
-resource contributorRoleAssignments 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-12-01-preview' = [for (principalId, i) in contributorPrincipalIds: {
+resource contributorRoleAssignments 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-12-01-preview' = [for (principalId, i) in contributorPrincipalIdsArray: {
   parent: cosmosDbAccount
   name: '${i}'
   properties: {
