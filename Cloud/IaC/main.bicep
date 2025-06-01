@@ -1,7 +1,7 @@
 
 param namePrefix string = 'rot-poc2'
 param location string = resourceGroup().location
-param contributorPrincipalIds array
+param contributorPrincipalIds string[]
 @secure()
 param secretKey string
 @secure()
