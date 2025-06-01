@@ -22,9 +22,6 @@ param workloadProfileType string = 'Consumption'
 resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   name: environmentName
   location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
   properties: {
     appLogsConfiguration: {
       destination: 'log-analytics'

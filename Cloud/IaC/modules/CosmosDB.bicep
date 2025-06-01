@@ -22,10 +22,6 @@ param backupIntervalInMinutes int = 1440
 @description('The backup retention interval in hours')
 param backupRetentionIntervalInHours int = 48
 
-@description('The principal IDs that should have contributor access')
-param contributorPrincipalIds string
-
-var contributorPrincipalIdsArray = split(contributorPrincipalIds, ',')
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2024-12-01-preview' = {
   name: cosmosDbAccountName

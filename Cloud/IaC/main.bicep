@@ -1,7 +1,6 @@
 
 param namePrefix string = 'rot-poc2'
 param location string = resourceGroup().location
-param contributorPrincipalIds string
 @secure()
 param secretKey string
 @secure()
@@ -32,7 +31,6 @@ module cosmosDb 'modules/CosmosDB.bicep' = {
     location: location
     databaseName: 'device-data'
     telemetryContainerName: 'telemetry'
-    contributorPrincipalIds: contributorPrincipalIds
   }
 }
 
@@ -66,9 +64,9 @@ module containerAppEnvironment 'modules/ContainerAppEnvironment.bicep' = {
     environmentName: '${namePrefix}-app-env'
     location: location
     logAnalyticsCustomerId: logAnalytics.outputs.workspaceId
-    zoneRedundant: true
-    enableMtls: true
-    enablePeerTrafficEncryption: true
+    zoneRedundant: false
+    enableMtls: false
+    enablePeerTrafficEncryption: false
     workloadProfileType: 'Consumption'
   }
 }
