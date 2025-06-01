@@ -20,5 +20,5 @@ steps:
     location: 'UK South'
     templateLocation: 'Linked artifact'
     csmFile: '$(Build.SourcesDirectory)/Cloud/IaC/main.bicep'
-    overrideParameters: '-secretKey $(SECRET_KEY) -azureClientSecret $(AZURE_CLIENT_SECRET) -azureTenantId $(AZURE_TENANT_ID)  -azureClientId $(AZURE_CLIENT_ID) -contributorPrincipalIds $(CONTRIBUTOR_PRINCIPAL_IDS)'
+    overrideParameters: '-secretKey $(SECRET_KEY) -azureClientSecret $(AZURE_CLIENT_SECRET) -azureTenantId $(AZURE_TENANT_ID)  -azureClientId $(AZURE_CLIENT_ID) -contributorPrincipalIds $(CONTRIBUTOR_PRINCIPAL_IDS) -allowedIpRanges $(allowedIpRanges)'
     deploymentMode: 'Incremental'
