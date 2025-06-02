@@ -2,6 +2,8 @@
 
 mod routes;
 pub mod services;
+pub mod domain;
+
 
 use routes::ingest_telemetry;
 use routes::read_telemetry;

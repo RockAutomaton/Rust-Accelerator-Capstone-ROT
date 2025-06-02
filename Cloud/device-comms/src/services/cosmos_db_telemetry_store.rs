@@ -1,5 +1,7 @@
 use super::AzureAuth;
 use azure_data_cosmos::CosmosClient;
+use futures::StreamExt;
+use crate::domain::Telemetry::Telemetry;
 
 pub struct CosmosDbTelemetryStore {
     database_name: String,
@@ -23,7 +25,8 @@ impl CosmosDbTelemetryStore {
         // Create Cosmos client
         let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT")
             .expect("COSMOS_ENDPOINT environment variable not set");
-        let client = CosmosClient::new(&cosmos_endpoint, self.azure_credential.clone(), None)?;
+        let client: CosmosClient = CosmosClient::new(&cosmos_endpoint, self.azure_credential.clone(), None)
+            .expect("Failed to create CosmosClient");
 
     let container = client
         .database_client(&self.database_name)
@@ -46,6 +49,35 @@ impl CosmosDbTelemetryStore {
 
         Ok(())
     }
+
+    pub async fn read_telemetry(
+        &self,
+        device_id: &str,
+    ) -> Result<Vec<Telemetry>, Box<dyn std::error::Error>> {
+        // Create Cosmos client
+        let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT")
+            .expect("COSMOS_ENDPOINT environment variable not set");
+        let client: CosmosClient = CosmosClient::new(&cosmos_endpoint, self.azure_credential.clone(), None)
+            .expect("Failed to create CosmosClient");
+
+        let container = client
+            .database_client(&self.database_name)
+            .container_client(&self.container_name);
+
+        // Query items
+        let query = format!("SELECT * FROM c WHERE c.device_id = '{}'", device_id);
+        let partition_key = device_id.to_string();
+        let mut pager = container.query_items::<Telemetry>(query, partition_key, None)?;
+
+        let mut items = Vec::new();
+        while let Some(page_response) = pager.next().await {
+            let page = page_response?;
+            items.extend(page.items().into_iter().cloned());
+        }
+
+        Ok(items)
+    }
+
 }
 
 #[cfg(test)]
