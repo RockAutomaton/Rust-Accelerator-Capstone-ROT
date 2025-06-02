@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use azure_core::credentials::Secret;
 use rocket::serde::json::Json;
 use serde::{Deserialize, Serialize};
 
-use azure_data_cosmos::CosmosClient;
-use azure_identity::{ClientSecretCredential};
+use crate::services::AzureAuth;
+use crate::services::CosmosDbTelemetryStore;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Telemetry {
@@ -30,31 +29,21 @@ async fn insert_telemetry(telemetry: Json<Telemetry>) -> Result<(), Box<dyn std:
         .insert("timestamp".to_string(), timestamp.clone());
 
     // Create unique ID
+
+
+    let cosmos_client =
+        CosmosDbTelemetryStore::new("device-data".to_string(), "telemetry".to_string());
+
+
     let id = format!("{}-{}", document.device_id, timestamp);
+    let inserted_document = serde_json::json!({
+        "id": id,
+        "device_id": document.device_id,
+        "telemetry_data": document.telemetry_data,
+    });
 
-    let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap();
-    let client_id = std::env::var("AZURE_CLIENT_ID").unwrap();
-    let client_secret = Secret::new(std::env::var("AZURE_CLIENT_SECRET").unwrap());
-
-    let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT").unwrap();
-    let credential = ClientSecretCredential::new(&tenant_id, client_id, client_secret, None)?;
-    let cosmos_client = CosmosClient::new(&cosmos_endpoint, credential, None).unwrap();
-    let database_name =
-        std::env::var("COSMOS_DATABASE").unwrap_or_else(|_| "device-data".to_string());
-    let container_name =
-        std::env::var("COSMOS_CONTAINER").unwrap_or_else(|_| "telemetry".to_string());
-    let container = cosmos_client
-        .database_client(&database_name)
-        .container_client(&container_name);
-
-    // Create document with id field
-    let mut document_with_id = serde_json::to_value(&document)?;
-    document_with_id["id"] = serde_json::Value::String(id.clone());
-
-    // Create an item
-    container
-        .create_item(&document.device_id, &document_with_id, None)
-        .await?;
+    cosmos_client.insert_telemetry(&inserted_document).await?;
+    println!("Telemetry inserted with ID: {}", id);
     Ok(())
 }
 

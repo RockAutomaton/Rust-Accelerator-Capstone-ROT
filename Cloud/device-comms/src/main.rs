@@ -1,6 +1,7 @@
 #[macro_use] extern crate rocket;
 
 mod routes;
+pub mod services;
 
 use routes::ingest_telemetry;
 use routes::read_telemetry;
