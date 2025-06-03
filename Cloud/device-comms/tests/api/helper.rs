@@ -3,6 +3,7 @@ use rocket::{
     routes,
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
+use device_comms::{app_state::AppState, services::CosmosDbTelemetryStore};
 
 pub struct TestApp {
     pub client: Client,
@@ -12,6 +13,14 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        // Create test cosmos client - you might want to use test database/container names
+        let cosmos_client = CosmosDbTelemetryStore::new(
+            "test-device-data".to_string(), 
+            "test-telemetry".to_string()
+        ).await?;
+        
+        let app_state = AppState::new(cosmos_client);
+
         let cors = CorsOptions {
             allowed_origins: AllowedOrigins::All,
             ..Default::default()
@@ -20,8 +29,9 @@ impl TestApp {
 
         let server = rocket::build()
             .configure(rocket::Config::figment()
-                .merge(("secret_key", "test_secret_key"))
+                .merge(("secret_key", "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")) // 64 hex chars
                 .merge(("address", "0.0.0.0")))
+            .manage(app_state) 
             .attach(cors)
             .mount("/iot/data", routes![
                 device_comms::routes::ingest_telemetry::ingest,
