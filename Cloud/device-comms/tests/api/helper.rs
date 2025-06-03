@@ -4,11 +4,16 @@ use rocket::{
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use device_comms::{app_state::AppState, services::CosmosDbTelemetryStore};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
+static TEST_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+#[allow(dead_code)]
 pub struct TestApp {
     pub client: Client,
     pub address: String,
     pub port: u16,
+    pub app_state: AppState,
 }
 
 impl TestApp {
@@ -31,7 +36,7 @@ impl TestApp {
             .configure(rocket::Config::figment()
                 .merge(("secret_key", "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")) // 64 hex chars
                 .merge(("address", "0.0.0.0")))
-            .manage(app_state) 
+            .manage(app_state.clone()) 
             .attach(cors)
             .mount("/iot/data", routes![
                 device_comms::routes::ingest_telemetry::ingest,
@@ -44,6 +49,12 @@ impl TestApp {
             client,
             address: "0.0.0.0".to_string(),
             port: 8000,
+            app_state,
         })
+    }
+
+    pub fn generate_test_device_id(&self) -> String {
+        let count = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
+        format!("test_device_{}", count)
     }
 }

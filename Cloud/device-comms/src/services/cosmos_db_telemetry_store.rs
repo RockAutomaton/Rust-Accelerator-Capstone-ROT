@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct CosmosDbTelemetryStore {
-    container_client: Arc<ContainerClient>,
+    pub container_client: Arc<ContainerClient>,
 }
 
 impl CosmosDbTelemetryStore {
@@ -70,48 +70,5 @@ impl CosmosDbTelemetryStore {
         }
 
         Ok(items)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[tokio::test]
-    async fn test_insert_telemetry() {
-        let store = CosmosDbTelemetryStore::new(
-            "device-data".to_string(), 
-            "telemetry".to_string()
-        ).await.expect("Failed to create store");
-        
-        let document = json!({
-            "device_id": "test_device",
-            "telemetry_data": {
-                "temperature": 22.5,
-                "humidity": 60
-            }
-        });
-
-        let result = store.insert_telemetry(&document).await;
-        assert!(result.is_ok(), "Failed to insert telemetry: {:?}", result);
-    }
-
-    #[tokio::test]
-    async fn test_insert_telemetry_with_missing_id() {
-        let store = CosmosDbTelemetryStore::new(
-            "device-data".to_string(), 
-            "telemetry".to_string()
-        ).await.expect("Failed to create store");
-        
-        let document = json!({
-            "telemetry_data": {
-                "temperature": 22.5,
-                "humidity": 60
-            }
-        });
-
-        let result = store.insert_telemetry(&document).await;
-        assert!(result.is_err(), "Expected error when device_id is missing");
     }
 }

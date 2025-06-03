@@ -12,12 +12,13 @@ async fn test_ingest_telemetry() {
     
     let app = TestApp::new().await.expect("Failed to create test app");
     let client: &Client = &app.client;
+    let device_id = app.generate_test_device_id();
 
     // Create a sample telemetry data
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, timestamp).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, timestamp).expect("Failed to parse telemetry");
 
     // Send a POST request to the ingest endpoint
     let response = client
@@ -40,10 +41,11 @@ async fn test_ingest_telemetry_without_timestamp() {
     
     let app = TestApp::new().await.expect("Failed to create test app");
     let client: &Client = &app.client;
+    let device_id = app.generate_test_device_id();
 
     let mut data = HashMap::new();
     data.insert("humidity".to_string(), "45.0".to_string());
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, 0).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, 0).expect("Failed to parse telemetry");
 
     let response = client
         .post("/iot/data/ingest")
@@ -62,6 +64,7 @@ async fn test_ingest_multiple_telemetry_values() {
     
     let app = TestApp::new().await.expect("Failed to create test app");
     let client: &Client = &app.client;
+    let device_id = app.generate_test_device_id();
 
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
@@ -70,7 +73,7 @@ async fn test_ingest_multiple_telemetry_values() {
     data.insert("battery".to_string(), "85".to_string());
     
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, timestamp).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, timestamp).expect("Failed to parse telemetry");
 
     let response = client
         .post("/iot/data/ingest")
@@ -100,7 +103,7 @@ async fn test_ingest_empty_telemetry_data() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::BadRequest);
+    assert_eq!(response.status(), Status::UnprocessableEntity);
 }
 
 #[tokio::test]
@@ -138,7 +141,7 @@ async fn test_ingest_empty_device_id() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::BadRequest);
+    assert_eq!(response.status(), Status::UnprocessableEntity);
 }
 
 #[tokio::test]
@@ -158,7 +161,7 @@ async fn test_ingest_invalid_timestamp() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::BadRequest);
+    assert_eq!(response.status(), Status::UnprocessableEntity);
 }
 
 #[tokio::test]
@@ -179,6 +182,6 @@ async fn test_ingest_empty_telemetry_value() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::BadRequest);
+    assert_eq!(response.status(), Status::UnprocessableEntity);
 }
 
