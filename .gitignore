@@ -37,3 +37,5 @@ rust-project.json
 Embedded/rp-rot/src/wifi_credentials.rs
 Embedded/rp-rot/.env
 Cloud/device-comms/.env
+Cloud/device-comms/scripts/create-cosmos-user.sh
+Cloud/device-comms/scripts/local-docker.sh
