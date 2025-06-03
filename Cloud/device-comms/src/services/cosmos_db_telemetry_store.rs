@@ -1,37 +1,41 @@
 use super::AzureAuth;
 use azure_data_cosmos::CosmosClient;
+use azure_data_cosmos::clients::ContainerClient;
 use futures::StreamExt;
 use crate::domain::telemetry::Telemetry;
+use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct CosmosDbTelemetryStore {
-    database_name: String,
-    container_name: String,
-    azure_credential: std::sync::Arc<azure_identity::ClientSecretCredential>,
+    container_client: Arc<ContainerClient>,
 }
 
 impl CosmosDbTelemetryStore {
-    pub fn new(database_name: String, container_name: String) -> Self {
-        CosmosDbTelemetryStore {
-            database_name,
-            container_name,
-            azure_credential: AzureAuth::get_credential_from_env(),
-        }
+    pub async fn new(
+        database_name: String, 
+        container_name: String
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT")
+            .expect("COSMOS_ENDPOINT environment variable not set");
+        
+        let azure_credential = AzureAuth::get_credential_from_env();
+        
+        // Create the client once during initialization
+        let cosmos_client = CosmosClient::new(&cosmos_endpoint, azure_credential, None)?;
+        
+        let container_client = cosmos_client
+            .database_client(&database_name)
+            .container_client(&container_name);
+
+        Ok(CosmosDbTelemetryStore {
+            container_client: Arc::new(container_client),
+        })
     }
 
     pub async fn insert_telemetry(
         &self,
         document: &serde_json::Value,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        // Create Cosmos client
-        let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT")
-            .expect("COSMOS_ENDPOINT environment variable not set");
-        let client: CosmosClient = CosmosClient::new(&cosmos_endpoint, self.azure_credential.clone(), None)
-            .expect("Failed to create CosmosClient");
-
-    let container = client
-        .database_client(&self.database_name)
-        .container_client(&self.container_name);
-
         // Create document with id field
         let mut document_with_id = document.clone();
         let id = format!(
@@ -41,9 +45,9 @@ impl CosmosDbTelemetryStore {
         );
         document_with_id["id"] = serde_json::Value::String(id.clone());
 
-        // Create an item
+        // Create an item using the stored container client
         let device_id = document["device_id"].as_str().unwrap().to_string();
-        container
+        self.container_client
             .create_item(&device_id, &document_with_id, None)
             .await?;
 
@@ -54,20 +58,10 @@ impl CosmosDbTelemetryStore {
         &self,
         device_id: &str,
     ) -> Result<Vec<Telemetry>, Box<dyn std::error::Error>> {
-        // Create Cosmos client
-        let cosmos_endpoint = std::env::var("COSMOS_ENDPOINT")
-            .expect("COSMOS_ENDPOINT environment variable not set");
-        let client: CosmosClient = CosmosClient::new(&cosmos_endpoint, self.azure_credential.clone(), None)
-            .expect("Failed to create CosmosClient");
-
-        let container = client
-            .database_client(&self.database_name)
-            .container_client(&self.container_name);
-
-        // Query items
+        // Query items using the stored container client
         let query = format!("SELECT * FROM c WHERE c.device_id = '{}'", device_id);
         let partition_key = device_id.to_string();
-        let mut pager = container.query_items::<Telemetry>(query, partition_key, None)?;
+        let mut pager = self.container_client.query_items::<Telemetry>(query, partition_key, None)?;
 
         let mut items = Vec::new();
         while let Some(page_response) = pager.next().await {
@@ -77,7 +71,6 @@ impl CosmosDbTelemetryStore {
 
         Ok(items)
     }
-
 }
 
 #[cfg(test)]
@@ -87,7 +80,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_insert_telemetry() {
-        let store = CosmosDbTelemetryStore::new("device-data".to_string(), "telemetry".to_string());
+        let store = CosmosDbTelemetryStore::new(
+            "device-data".to_string(), 
+            "telemetry".to_string()
+        ).await.expect("Failed to create store");
+        
         let document = json!({
             "device_id": "test_device",
             "telemetry_data": {
@@ -99,9 +96,14 @@ mod tests {
         let result = store.insert_telemetry(&document).await;
         assert!(result.is_ok(), "Failed to insert telemetry: {:?}", result);
     }
+
     #[tokio::test]
     async fn test_insert_telemetry_with_missing_id() {
-        let store = CosmosDbTelemetryStore::new("device-data".to_string(), "telemetry".to_string());
+        let store = CosmosDbTelemetryStore::new(
+            "device-data".to_string(), 
+            "telemetry".to_string()
+        ).await.expect("Failed to create store");
+        
         let document = json!({
             "telemetry_data": {
                 "temperature": 22.5,

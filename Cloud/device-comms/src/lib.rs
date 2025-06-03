@@ -6,11 +6,12 @@ use rocket::{
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
 
-
 pub mod routes;
 pub mod services;
 pub mod domain;
+pub mod app_state;
 
+use crate::app_state::AppState;
 pub struct Application {
     pub server: rocket::Rocket<rocket::Build>,
     pub address: String,
@@ -18,7 +19,7 @@ pub struct Application {
 }
 
 impl Application {
-    pub async fn build() -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn build(app_state: AppState) -> Result<Self, Box<dyn std::error::Error>> {
         dotenv().ok();
 
         let cors = CorsOptions {
@@ -31,8 +32,12 @@ impl Application {
             .configure(rocket::Config::figment()
                 .merge(("secret_key", std::env::var("SECRET_KEY").unwrap()))
                 .merge(("address", "0.0.0.0")))
+            .manage(app_state)
             .attach(cors)
-            .mount("/iot/data", routes![routes::ingest_telemetry::ingest, routes::read_telemetry::read]);
+            .mount("/iot/data", routes![
+                routes::ingest_telemetry::ingest, 
+                routes::read_telemetry::read
+            ]);
 
         println!("listening on 0.0.0.0:8000");
         Ok(Self {
