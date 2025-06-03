@@ -1,5 +1,3 @@
-#[macro_use] extern crate rocket;
-
 use device_comms::Application;
 
 

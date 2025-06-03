@@ -1,3 +1,3 @@
-pub mod Telemetry;
+pub mod telemetry;
 
-pub use Telemetry::*;
+pub use telemetry::*;

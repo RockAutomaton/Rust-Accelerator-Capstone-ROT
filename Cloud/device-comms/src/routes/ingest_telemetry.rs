@@ -1,7 +1,7 @@
 use rocket::serde::json::Json;
 
 
-use crate::domain::Telemetry::Telemetry;
+use crate::domain::telemetry::Telemetry;
 use crate::services::CosmosDbTelemetryStore;
 
 async fn insert_telemetry(telemetry: Json<Telemetry>) -> Result<(), Box<dyn std::error::Error>> {

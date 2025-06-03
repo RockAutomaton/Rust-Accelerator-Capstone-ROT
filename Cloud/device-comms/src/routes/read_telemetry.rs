@@ -1,5 +1,5 @@
 use rocket::serde::json::Json;
-use crate::domain::Telemetry::Telemetry; // If Telemetry is a struct, ensure it's pub in the module
+use crate::domain::telemetry::Telemetry; // If Telemetry is a struct, ensure it's pub in the module
 
 use crate::services::CosmosDbTelemetryStore;
 

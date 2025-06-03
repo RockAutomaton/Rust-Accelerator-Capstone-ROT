@@ -1,7 +1,7 @@
 use super::AzureAuth;
 use azure_data_cosmos::CosmosClient;
 use futures::StreamExt;
-use crate::domain::Telemetry::Telemetry;
+use crate::domain::telemetry::Telemetry;
 
 pub struct CosmosDbTelemetryStore {
     database_name: String,
