@@ -1,8 +1,13 @@
 use device_comms::{services::CosmosDbTelemetryStore, Application};
+use device_comms::utils::tracing::init_tracing;
 
 #[rocket::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
+    
+    // Initialize tracing
+    init_tracing()?;
+    
     let cosmos_client = configure_cosmos_client().await;
     let app_state = device_comms::app_state::AppState::new(cosmos_client);
     let app = Application::build(app_state).await?;

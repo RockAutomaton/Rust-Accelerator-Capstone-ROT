@@ -19,3 +19,9 @@ futures = "0.3.31"
 openssl = { version = "0.10", features = ["vendored"] }
 reqwest = { version = "0.11", features = ["json"] }
 async-trait = "0.1"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
+tracing-error = "0.2.0"
+thiserror = "1.0.58"
+color-eyre = "0.6.3"
+uuid = { version = "1.7.0", features = ["v4"] }

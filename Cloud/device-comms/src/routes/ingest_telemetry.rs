@@ -1,23 +1,34 @@
 use rocket::serde::json::Json;
 use rocket::{State, http::Status};
+use tracing::{info, error};
 
-use crate::domain::telemetry::{Telemetry, TelemetryError};
+use crate::domain::telemetry::Telemetry;
+use crate::domain::error::ApiError;
 use crate::app_state::AppState;
 
-async fn insert_telemetry(state: &AppState, telemetry: Json<Telemetry>) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Inserting telemetry: {:?}", telemetry);
+async fn insert_telemetry(state: &AppState, telemetry: Json<Telemetry>) -> Result<(), ApiError> {
+    info!("Inserting telemetry: {:?}", telemetry);
 
     // Parse and validate the telemetry data
     let document = Telemetry::parse(
         telemetry.device_id.clone(),
         telemetry.telemetry_data.clone(),
         telemetry.timestamp.unwrap_or_default()
-    )?;
+    ).map_err(|e| match e {
+        crate::domain::telemetry::TelemetryError::InvalidDeviceId => ApiError::InvalidDeviceId,
+        crate::domain::telemetry::TelemetryError::InvalidTimestamp => ApiError::InvalidTimestamp,
+        crate::domain::telemetry::TelemetryError::EmptyTelemetryData => ApiError::EmptyTelemetryData,
+        crate::domain::telemetry::TelemetryError::InvalidTelemetryValue(msg) => ApiError::InvalidTelemetryValue(msg),
+    })?;
 
-    let inserted_document = serde_json::to_value(&document)?;
+    let inserted_document = serde_json::to_value(&document)
+        .map_err(|e| ApiError::DatabaseError(e.to_string()))?;
 
-    state.cosmos_client.insert_telemetry(&inserted_document).await?;
-    println!("Telemetry inserted successfully");
+    state.cosmos_client.insert_telemetry(&inserted_document)
+        .await
+        .map_err(|e| ApiError::DatabaseError(e.to_string()))?;
+
+    info!("Telemetry inserted successfully");
     Ok(())
 }
 
@@ -26,26 +37,16 @@ pub async fn ingest(
     state: &State<AppState>, 
     telemetry: Json<Telemetry>
 ) -> Result<&'static str, Status> {
-    println!("Received telemetry: {:?}", telemetry);
+    info!("Received telemetry: {:?}", telemetry);
     
     match insert_telemetry(state.inner(), telemetry).await {
         Ok(()) => {
-            println!("Successfully processed telemetry");
+            info!("Successfully processed telemetry");
             Ok("Telemetry ingested")
         }
         Err(e) => {
-            eprintln!("Error inserting telemetry: {}", e);
-            match e.downcast_ref::<TelemetryError>() {
-                Some(telemetry_error) => {
-                    match telemetry_error {
-                        TelemetryError::InvalidDeviceId => Err(Status::BadRequest),
-                        TelemetryError::InvalidTimestamp => Err(Status::BadRequest),
-                        TelemetryError::EmptyTelemetryData => Err(Status::BadRequest),
-                        TelemetryError::InvalidTelemetryValue(_) => Err(Status::BadRequest),
-                    }
-                }
-                None => Err(Status::InternalServerError)
-            }
+            error!("Error inserting telemetry: {}", e);
+            Err(e.into())
         }
     }
 }
