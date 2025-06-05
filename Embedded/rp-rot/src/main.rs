@@ -25,11 +25,13 @@ mod drivers;
 mod error;
 mod network;
 mod tasks;
+mod utils;
 
 use config::{TelemetryConfig, WiFiConfig};
 use drivers::{Led, WiFiDriver};
 use network::NetworkStack;
 use tasks::{cyw43_task, network_task, telemetry_task, TelemetryTaskConfig};
+use utils::debug_server::post_to_debug_server;
 
 use embassy_rp::gpio::AnyPin;
 
@@ -39,7 +41,7 @@ const WIFI_PASSWORD: &str = env!("WIFI_PASSWORD");
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    info!("WiFi Telemetry System Starting!");
+    info!("WiFi Telemetry System - Starting!");
 
     let p = embassy_rp::init(Default::default());
     let mut rng = RoscRng;
@@ -130,6 +132,7 @@ async fn main(spawner: Spawner) {
 
     // Wait for DHCP with timeout
     info!("Waiting for DHCP...");
+    let _ = post_to_debug_server(&stack, "Waiting for DHCP...").await;
     let mut dhcp_timeout = 30; // 30 seconds timeout
     while !stack.is_config_up() && dhcp_timeout > 0 {
         Timer::after(Duration::from_secs(1)).await;
@@ -143,16 +146,21 @@ async fn main(spawner: Spawner) {
         }
     }
     info!("DHCP is now up!");
+    let _ = post_to_debug_server(&stack, "DHCP is now up!").await;
 
     info!("Waiting for link up...");
+    let _ = post_to_debug_server(&stack, "Waiting for link up...").await;
     while !stack.is_link_up() {
         Timer::after(Duration::from_millis(500)).await;
     }
     info!("Link is up!");
+    let _ = post_to_debug_server(&stack, "Link is up!").await;
 
     info!("Waiting for stack to be up...");
+    let _ = post_to_debug_server(&stack, "Waiting for stack to be up...").await;
     stack.wait_config_up().await;
     info!("Stack is up!");
+    let _ =     post_to_debug_server(&stack, "Stack is up!").await;
 
     // Initialize telemetry task
     let telemetry_task_config = TelemetryTaskConfig {

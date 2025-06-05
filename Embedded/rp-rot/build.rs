@@ -35,16 +35,23 @@ fn main() {
         "YOUR_TELEMETRY_HOST".to_string()
     });
 
+    // Debug Server - optional
+    let debug_server = env::var("DEBUG_SERVER").unwrap_or_else(|_| {
+        println!("cargo:warning=DEBUG_SERVER not set, using default");
+        "localhost".to_string()
+    });
+
     // Pass to compiler as constants
     println!("cargo:rustc-env=WIFI_NETWORK={}", wifi_network);
     println!("cargo:rustc-env=WIFI_PASSWORD={}", wifi_password);
     println!("cargo:rustc-env=TELEMETRY_HOST={}", telemetry_host);
+    println!("cargo:rustc-env=DEBUG_SERVER={}", debug_server);
 
     // Rebuild if .env file changes
     println!("cargo:rerun-if-changed=.env");
     println!("cargo:rerun-if-env-changed=WIFI_NETWORK");
     println!("cargo:rerun-if-env-changed=WIFI_PASSWORD");
-    println!("cargo:rerun-if-env-changed=TEST_IP");
+    println!("cargo:rerun-if-env-changed=DEBUG_SERVER");
     // Put `memory.x` in our output directory and ensure it's
     // on the linker search path.
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
