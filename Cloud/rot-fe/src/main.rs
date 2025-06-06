@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use components::{Header, Navbar};
+use components::{Header, Navbar, ApexChart};
 
 
 mod components;
@@ -12,6 +12,7 @@ fn App() -> Html {
         <div>
             <Navbar />
             <Header />
+            <ApexChart />
         </div>
         
     }
