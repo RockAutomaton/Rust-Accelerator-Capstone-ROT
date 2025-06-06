@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/style.css -o ./dist/style.css --watch",
+    "dev": "npm run build-css && trunk serve",
+    "build": "trunk build --release"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.8"
+  }
+}
