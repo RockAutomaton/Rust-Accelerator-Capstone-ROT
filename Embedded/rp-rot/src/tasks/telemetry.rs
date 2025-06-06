@@ -1,6 +1,6 @@
 use defmt::*;
 use embassy_net::Stack;
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Instant, Timer};
 use embedded_io_async::Write;
 
 use crate::config::TelemetryConfig;
@@ -58,7 +58,15 @@ async fn send_telemetry(stack: &Stack<'_>) -> Result<(), TelemetryError> {
     }
 
     // Prepare the telemetry data
-    let telemetry_data = "{\"device_id\":\"1\",\"telemetry_data\":{\"temperature\":\"25.5\",\"humidity\":\"60.0\",\"status\":\"active\"}}";
+    let timestamp = Instant::now().as_secs();
+    let mut telemetry_data = String::<256>::new();
+    let _ = core::fmt::write(
+        &mut telemetry_data,
+        format_args!(
+            "{{\"device_id\":\"1\",\"timestamp\":{},\"telemetry_data\":{{\"temperature\":\"25.5\",\"humidity\":\"60.0\",\"status\":\"active\"}}}}",
+            timestamp
+        ),
+    );
 
     // Prepare HTTP request
     let mut request = String::<512>::new();
