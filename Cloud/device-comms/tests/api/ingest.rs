@@ -18,7 +18,7 @@ async fn test_ingest_telemetry() {
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse(device_id, data, timestamp).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, Some(timestamp)).expect("Failed to parse telemetry");
 
     // Send a POST request to the ingest endpoint
     let response = client
@@ -45,7 +45,7 @@ async fn test_ingest_telemetry_without_timestamp() {
 
     let mut data = HashMap::new();
     data.insert("humidity".to_string(), "45.0".to_string());
-    let telemetry_data = Telemetry::parse(device_id, data, 0).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, None).expect("Failed to parse telemetry");
 
     let response = client
         .post("/iot/data/ingest")
@@ -73,7 +73,7 @@ async fn test_ingest_multiple_telemetry_values() {
     data.insert("battery".to_string(), "85".to_string());
     
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse(device_id, data, timestamp).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id, data, Some(timestamp)).expect("Failed to parse telemetry");
 
     let response = client
         .post("/iot/data/ingest")
@@ -95,7 +95,7 @@ async fn test_ingest_empty_telemetry_data() {
 
     let data = HashMap::new();
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, timestamp).expect_err("Should fail with empty data");
+    let telemetry_data = Telemetry::parse("test_device".to_string(), data, Some(timestamp)).expect_err("Should fail with empty data");
 
     let response = client
         .post("/iot/data/ingest")
@@ -133,7 +133,7 @@ async fn test_ingest_empty_device_id() {
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse("".to_string(), data, timestamp).expect_err("Should fail with empty device ID");
+    let telemetry_data = Telemetry::parse("".to_string(), data, Some(timestamp)).expect_err("Should fail with empty device ID");
 
     let response = client
         .post("/iot/data/ingest")
@@ -153,7 +153,7 @@ async fn test_ingest_invalid_timestamp() {
 
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, -1).expect_err("Should fail with invalid timestamp");
+    let telemetry_data = Telemetry::parse("test_device".to_string(), data, Some(-1)).expect_err("Should fail with invalid timestamp");
 
     let response = client
         .post("/iot/data/ingest")
@@ -174,7 +174,7 @@ async fn test_ingest_empty_telemetry_value() {
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "".to_string());
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse("test_device".to_string(), data, timestamp).expect_err("Should fail with empty telemetry value");
+    let telemetry_data = Telemetry::parse("test_device".to_string(), data, Some(timestamp)).expect_err("Should fail with empty telemetry value");
 
     let response = client
         .post("/iot/data/ingest")

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize, Deserializer};
 use std::{collections::HashMap};
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 
 fn deserialize_timestamp<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
 where
@@ -80,11 +80,14 @@ impl Telemetry {
         }
     }
 
-    pub fn parse(device_id: String, telemetry_data: HashMap<String, String>, timestamp: i64) -> Result<Self, TelemetryError> {
+    pub fn parse(device_id: String, telemetry_data: HashMap<String, String>, timestamp: Option<i64>) -> Result<Self, TelemetryError> {
         // Validate device_id
         if device_id.trim().is_empty() {
             return Err(TelemetryError::InvalidDeviceId);
         }
+
+        // Use current timestamp if none provided
+        let timestamp = timestamp.unwrap_or_else(|| Utc::now().timestamp());
 
         // Validate timestamp
         if timestamp < 0 {

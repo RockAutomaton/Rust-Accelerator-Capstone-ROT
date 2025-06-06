@@ -18,7 +18,7 @@ async fn test_read_telemetry() {
     let mut data = HashMap::new();
     data.insert("temperature".to_string(), "22.5".to_string());
     let timestamp = chrono::Utc::now().timestamp();
-    let telemetry_data = Telemetry::parse(device_id.clone(), data, timestamp).expect("Failed to parse telemetry");
+    let telemetry_data = Telemetry::parse(device_id.clone(), data, Some(timestamp)).expect("Failed to parse telemetry");
 
     // Insert the test data
     let response = client
@@ -45,7 +45,6 @@ async fn test_read_telemetry() {
     assert!(!telemetry.is_empty());
     assert_eq!(telemetry[0].device_id, device_id);
     assert_eq!(telemetry[0].telemetry_data.get("temperature").unwrap(), "22.5");
-
 }
 
 #[tokio::test]
@@ -78,7 +77,7 @@ async fn test_read_multiple_telemetry_entries() {
         let mut data = HashMap::new();
         data.insert("temperature".to_string(), format!("{}.5", 20 + i));
         let timestamp = chrono::Utc::now().timestamp() + i;
-        let telemetry_data = Telemetry::parse(device_id.clone(), data, timestamp).expect("Failed to parse telemetry");
+        let telemetry_data = Telemetry::parse(device_id.clone(), data, Some(timestamp)).expect("Failed to parse telemetry");
 
         let response = client
             .post("/iot/data/ingest")

@@ -13,7 +13,7 @@ async fn insert_telemetry(state: &AppState, telemetry: Json<Telemetry>) -> Resul
     let document = Telemetry::parse(
         telemetry.device_id.clone(),
         telemetry.telemetry_data.clone(),
-        telemetry.timestamp.unwrap_or_default()
+        telemetry.timestamp
     ).map_err(|e| match e {
         crate::domain::telemetry::TelemetryError::InvalidDeviceId => ApiError::InvalidDeviceId,
         crate::domain::telemetry::TelemetryError::InvalidTimestamp => ApiError::InvalidTimestamp,

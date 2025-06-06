@@ -58,13 +58,11 @@ async fn send_telemetry(stack: &Stack<'_>) -> Result<(), TelemetryError> {
     }
 
     // Prepare the telemetry data
-    let timestamp = Instant::now().as_secs();
     let mut telemetry_data = String::<256>::new();
     let _ = core::fmt::write(
         &mut telemetry_data,
         format_args!(
-            "{{\"device_id\":\"1\",\"timestamp\":{},\"telemetry_data\":{{\"temperature\":\"25.5\",\"humidity\":\"60.0\",\"status\":\"active\"}}}}",
-            timestamp
+            "{{\"device_id\":\"1\",\"telemetry_data\":{{\"temperature\":\"25.5\",\"humidity\":\"60.0\",\"status\":\"active\"}}}}"
         ),
     );
 
