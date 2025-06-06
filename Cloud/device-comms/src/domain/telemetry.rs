@@ -29,7 +29,7 @@ pub struct Telemetry {
     pub id: Option<String>,
     pub device_id: String,
     pub telemetry_data: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
+    #[serde(deserialize_with = "deserialize_timestamp", default)]
     pub timestamp: Option<i64>,
     #[serde(rename = "_rid", skip_serializing_if = "Option::is_none")]
     rid: Option<String>,
