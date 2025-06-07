@@ -3,7 +3,7 @@ use rocket::{
     routes,
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
-use device_comms::{app_state::AppState, services::CosmosDbTelemetryStore};
+use device_monitor::{app_state::AppState, services::CosmosDbTelemetryStore};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static TEST_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -39,7 +39,7 @@ impl TestApp {
             .manage(app_state.clone()) 
             .attach(cors)
             .mount("/iot/data", routes![
-                device_comms::routes::ingest_telemetry::ingest,
+                device_monitor::routes::read_telemetry::read,
             ]);
 
         let client = Client::tracked(server).await?;

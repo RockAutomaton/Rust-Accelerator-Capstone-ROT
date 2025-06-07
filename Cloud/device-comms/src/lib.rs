@@ -71,7 +71,6 @@ impl Application {
             .attach(TracingFairing)
             .mount("/iot/data", routes![
                 routes::ingest_telemetry::ingest, 
-                routes::read_telemetry::read
             ]);
 
         println!("listening on 0.0.0.0:8000");
