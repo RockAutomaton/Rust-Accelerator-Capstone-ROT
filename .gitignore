@@ -185,3 +185,5 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 Cloud/device-monitor/scripts/local-docker.sh
+
+**/src/generated_env.rs

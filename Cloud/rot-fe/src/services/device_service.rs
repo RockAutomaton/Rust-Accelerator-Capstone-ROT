@@ -2,12 +2,13 @@
 use gloo_net::http::Request;
 use crate::domain::telemetry::Telemetry;
 
+include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/generated_env.rs"));
+
 pub struct DeviceService;
 
 impl DeviceService {
     // Base URL for your device data service
-    const BASE_URL: &'static str = "http://127.0.0.1:8001";
-
+    const BASE_URL: &'static str = ROT_API_URL; 
     pub async fn get_telemetry(device_id: &str) -> Result<Vec<Telemetry>, String> {
         let url = format!("{}/iot/data/read/{}", Self::BASE_URL, device_id);
         let response = Request::get(&url)

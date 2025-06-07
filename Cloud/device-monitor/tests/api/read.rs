@@ -2,8 +2,7 @@ use crate::helper::TestApp;
 use rocket::http::Status;
 use rocket::local::asynchronous::Client;
 use dotenvy::dotenv;
-use device_monitor::domain::telemetry::Telemetry;
-use std::collections::HashMap;
+
 
 #[tokio::test]
 async fn test_read_nonexistent_device() {

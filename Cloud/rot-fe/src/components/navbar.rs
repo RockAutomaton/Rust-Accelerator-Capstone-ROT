@@ -12,24 +12,8 @@ pub fn navbar() -> Html {
                 </div>
                 // Navigation Links
                 <div class="hidden md:flex gap-8">
-                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Home"}</a>
-                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Features"}</a>
-                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Docs"}</a>
-                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Contact"}</a>
-                </div>
-                // Call to Action
-                <div class="hidden md:block">
-                    <a href="#" class="bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-5 rounded transition">
-                        {"Get Started"}
-                    </a>
-                </div>
-                // Mobile menu icon (optional, not functional here)
-                <div class="md:hidden">
-                    <button class="text-green-500 focus:outline-none">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
-                    </button>
+                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Device Monitoring"}</a>
+                    <a href="#" class="text-white hover:text-green-400 font-medium transition">{"Device Management (Coming Soon)"}</a>
                 </div>
             </div>
         </nav>
