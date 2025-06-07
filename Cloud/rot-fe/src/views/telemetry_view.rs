@@ -17,6 +17,7 @@ pub fn telemetry_view() -> Html {
     let telemetry_data = use_state(|| None::<Telemetry>);
     let loading = use_state(|| true);
     let error = use_state(|| None::<String>);
+    let refresh_count = use_state(|| 0);
 
     let on_input_change = {
         let input_value = input_value.clone();
@@ -40,12 +41,18 @@ pub fn telemetry_view() -> Html {
         })
     };
 
+    let refresh_count_setter = refresh_count.clone();
+    let on_refresh = Callback::from(move |_| {
+        refresh_count_setter.set(*refresh_count_setter + 1);
+    });
+
     {
         let telemetry_data = telemetry_data.clone();
         let loading = loading.clone();
         let error = error.clone();
         let device_id = device_id.clone();
-        use_effect_with((*device_id).clone(), move |device_id| {
+        let refresh_count = refresh_count.clone();
+        use_effect_with(((*device_id).clone(), *refresh_count), move |(device_id, _)| {
             let device_id = device_id.clone();
             loading.set(true);
             error.set(None);
@@ -110,6 +117,15 @@ pub fn telemetry_view() -> Html {
                         { if *loading { html! { <span class="animate-spin mr-2">{"⏳"}</span> } } else { html!{} } }
                         {"Submit"}
                     </button>
+                    <button
+                        type="button"
+                        onclick={on_refresh}
+                        class="mt-2 sm:mt-0 px-4 py-2 rounded bg-gray-500 text-white font-semibold shadow hover:bg-gray-700 transition ml-2"
+                        disabled={*loading}
+                    >
+                        { if *loading { html! { <span class="animate-spin mr-2">{"⏳"}</span> } } else { html!{} } }
+                        {"Refresh"}
+                    </button>
                 </form>
             </div>
 
@@ -164,16 +180,18 @@ pub fn telemetry_view() -> Html {
             }
                     <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ApexChart
-                key={format!("temperature-{}", *device_id)}
+                key={format!("temperature-{}-{}", *device_id, *refresh_count)}
                 metric_key="temperature"
                 title="Temperature Over Time"
                 device_id={(*device_id).clone()}
+                refresh_count={*refresh_count}
             />
             <ApexChart
-                key={format!("humidity-{}", *device_id)}
+                key={format!("humidity-{}-{}", *device_id, *refresh_count)}
                 metric_key="humidity"
                 title="Humidity Over Time"
                 device_id={(*device_id).clone()}
+                refresh_count={*refresh_count}
             />
         </div>
         </div>

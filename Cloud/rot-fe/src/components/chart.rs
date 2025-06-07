@@ -101,6 +101,7 @@ pub struct ApexChartProps {
     pub metric_key: String, // Which telemetry key to chart (e.g., "temperature")
     pub title: String,      // Chart title
     pub device_id: String,  // Device ID to fetch data for
+    pub refresh_count: usize,
 }
 
 #[function_component(ApexChart)]
@@ -115,8 +116,9 @@ pub fn apex_chart(props: &ApexChartProps) -> Html {
         let telemetry_data = telemetry_data.clone();
         let loading = loading.clone();
         let device_id = props.device_id.clone();
-        
-        use_effect_with(props.device_id.clone(), move |_| {
+        let refresh_count = props.refresh_count;
+        use_effect_with((device_id.clone(), refresh_count), move |(device_id, _)| {
+            let device_id = device_id.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 match DeviceService::get_telemetry(&device_id).await {
                     Ok(data) => {
