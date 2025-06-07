@@ -7,6 +7,10 @@ RUN cargo install trunk
 RUN rustup target add wasm32-unknown-unknown
 WORKDIR /app
 
+# Add build argument
+ARG ROT_API_URL
+ENV ROT_API_URL=$ROT_API_URL
+
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
@@ -15,6 +19,10 @@ FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
+# Ensure ROT_API_URL is available in this stage
+ARG ROT_API_URL
+ENV ROT_API_URL=$ROT_API_URL
+RUN echo "Building with ROT_API_URL: $ROT_API_URL"
 RUN cargo build --release
 RUN npm install
 RUN npx tailwindcss -i ./src/style.css -o ./dist/style.css
