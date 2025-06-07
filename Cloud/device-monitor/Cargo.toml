@@ -1,0 +1,27 @@
+[package]
+name = "device-monitor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rocket = { version = "0.5.1", features = ["secrets", "tls", "json"] }
+serde = { version = "1.0.210", features = ["derive"] }
+serde_json = "1.0.140"
+dotenvy = "0.15.7"
+rocket_cors = "0.6.0"
+azure_identity = "0.24.0"
+azure_security_keyvault_secrets = "0.3.0"
+tokio = "1.45.1"
+azure_data_cosmos = { version = "0.23.0", features = ["key_auth"] }
+chrono = { version = "0.4.30", features = ["serde"] }
+azure_core = "0.24.0"    
+futures = "0.3.31"
+openssl = { version = "0.10", features = ["vendored"] }
+reqwest = { version = "0.11", features = ["json"] }
+async-trait = "0.1"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
+tracing-error = "0.2.0"
+thiserror = "1.0.58"
+color-eyre = "0.6.3"
+uuid = { version = "1.7.0", features = ["v4"] }
