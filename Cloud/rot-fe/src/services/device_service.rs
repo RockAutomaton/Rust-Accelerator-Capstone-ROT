@@ -12,8 +12,14 @@ impl DeviceService {
     #[instrument(skip_all, fields(device_id = %device_id), level = Level::INFO)]
     pub async fn get_telemetry(device_id: &str) -> Result<Vec<Telemetry>, String> {
         info!("Fetching telemetry data for device");
-        let url = format!("{}/iot/data/read/{}", Self::BASE_URL, device_id);
+        
+        // Ensure BASE_URL is properly formatted
+        let base_url = Self::BASE_URL.trim_end_matches('/');
+        info!(base_url = %base_url, "Using base URL");
+        
+        let url = format!("{}/iot/data/read/{}", base_url, device_id);
         info!(url = %url, "Making request to URL");
+        
         let response = Request::get(&url)
             .send()
             .await
