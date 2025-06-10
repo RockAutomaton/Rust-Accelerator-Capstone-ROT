@@ -35,7 +35,7 @@ stages:
         repository: $(imageRepository)
         dockerfile: $(dockerfilePath)
         buildContext: '$(Build.SourcesDirectory)/Cloud/rot-fe'
-        arguments: '--build-arg ROT_API_URL="$(ROT_API_URL)"'
+        arguments: --build-arg ROT_API_URL=$(ROT_API_URL)
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
