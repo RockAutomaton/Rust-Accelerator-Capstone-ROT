@@ -15,9 +15,6 @@ variables:
   containerRegistry: 'rotpoccr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Cloud/rot-fe/Dockerfile'
   tag: '$(Build.BuildId)'
-  
-  # API URL for the backend service
-  ROT_API_URL: '$(ROT_API_URL)'  # This will use the pipeline variable set in Azure DevOps
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
