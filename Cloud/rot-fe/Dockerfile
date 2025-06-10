@@ -10,6 +10,7 @@ WORKDIR /app
 # Add build argument
 ARG ROT_API_URL
 ENV ROT_API_URL=$ROT_API_URL
+RUN echo "Chef stage ROT_API_URL: $ROT_API_URL"
 
 FROM chef AS planner
 COPY . .
@@ -30,6 +31,11 @@ RUN trunk build --release
 
 # Runtime stage with nginx
 FROM nginx:alpine AS runtime
+# Pass the build arg to runtime stage
+ARG ROT_API_URL
+ENV ROT_API_URL=$ROT_API_URL
+RUN echo "Runtime stage ROT_API_URL: $ROT_API_URL"
+
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
