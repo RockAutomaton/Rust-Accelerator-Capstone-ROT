@@ -28,16 +28,13 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        buildContext: '$(Build.SourcesDirectory)/Cloud/rot-fe'
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-      env: 
-          ROT_API_URL: $(ROT_API_URL)
-
+    - script: |
+        echo "##[command]Building with ROT_API_URL: $(ROT_API_URL)"
+        docker build -t $(containerRegistry)/$(imageRepository):$(tag) \
+          --build-arg ROT_API_URL="$(ROT_API_URL)" \
+          -f $(dockerfilePath) \
+          $(Build.SourcesDirectory)/Cloud/rot-fe
+        docker push $(containerRegistry)/$(imageRepository):$(tag)
+      displayName: 'Build and push Docker image'
+      env:
+        DOCKER_CONFIG: $(dockerRegistryServiceConnection)
