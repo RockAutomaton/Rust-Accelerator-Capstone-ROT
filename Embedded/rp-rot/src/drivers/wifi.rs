@@ -1,19 +1,15 @@
 use cyw43::{Control, JoinOptions, PowerManagementMode};
 use cyw43_pio::{PioSpi, DEFAULT_CLOCK_DIVIDER};
 use defmt::*;
+use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::{Level, Output};
-use embassy_rp::peripherals::{DMA_CH0, PIO0};
+use embassy_rp::peripherals::{DMA_CH0, PIN_23, PIN_24, PIN_25, PIN_29, PIO0};
 use embassy_rp::pio::{InterruptHandler, Pio};
-use embassy_rp::{bind_interrupts, peripherals::*};
 use embassy_time::{Duration, Timer};
 use static_cell::StaticCell;
 
 use crate::config::WiFiConfig;
 use crate::error::WiFiError;
-
-bind_interrupts!(pub struct Irqs {
-    PIO0_IRQ_0 => InterruptHandler<PIO0>;
-});
 
 pub struct WiFiDriver;
 
@@ -60,7 +56,7 @@ impl WiFiDriver {
         Timer::after(Duration::from_millis(100)).await;
 
         info!("Initializing PIO...");
-        let mut pio = Pio::new(pio0, Irqs);
+        let mut pio = Pio::new(pio0, crate::Irqs);
         Timer::after(Duration::from_millis(100)).await;
 
         info!("Initializing SPI...");

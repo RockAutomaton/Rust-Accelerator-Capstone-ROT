@@ -2,18 +2,18 @@
 #![no_std]
 #![no_main]
 
-use cyw43::{Control, JoinOptions, PowerManagementMode};
+use cyw43::JoinOptions;
 use cyw43_pio::{PioSpi, DEFAULT_CLOCK_DIVIDER};
 use defmt::*;
 use defmt_rtt as _;
 use embassy_executor::Spawner;
-use embassy_net::{Config, Stack, StackResources};
+use embassy_net::{Config, StackResources};
+use embassy_rp::adc::InterruptHandler as AdcInterruptHandler;
+use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::gpio::{Level, Output};
-use embassy_rp::init;
 use embassy_rp::peripherals::*;
-use embassy_rp::pio::{InterruptHandler, Pio};
-use embassy_rp::{bind_interrupts, peripherals::*};
+use embassy_rp::pio::{InterruptHandler as PioInterruptHandler, Pio};
 use embassy_time::{Duration, Timer};
 use panic_probe as _;
 use rand_core::RngCore;
@@ -27,9 +27,7 @@ mod network;
 mod tasks;
 mod utils;
 
-use config::{TelemetryConfig, WiFiConfig};
-use drivers::{Led, WiFiDriver};
-use network::NetworkStack;
+use drivers::{Led, TemperatureSensor};
 use tasks::{cyw43_task, network_task, telemetry_task, TelemetryTaskConfig};
 use utils::debug_server::post_to_debug_server;
 
@@ -38,6 +36,11 @@ use embassy_rp::gpio::AnyPin;
 // WiFi credentials from build-time environment variables
 const WIFI_NETWORK: &str = env!("WIFI_NETWORK");
 const WIFI_PASSWORD: &str = env!("WIFI_PASSWORD");
+
+bind_interrupts!(struct Irqs {
+    PIO0_IRQ_0 => PioInterruptHandler<PIO0>;
+    ADC_IRQ_FIFO => AdcInterruptHandler;
+});
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -51,6 +54,10 @@ async fn main(spawner: Spawner) {
     let mut led = Led::new(AnyPin::from(p.PIN_16));
     led.error_blink().await; // Startup pattern
 
+    // Initialize temperature sensor
+    info!("Initializing temperature sensor...");
+    let temp_sensor = TemperatureSensor::new(p.ADC, p.ADC_TEMP_SENSOR);
+
     // Initialize WiFi
     info!("Initializing WiFi...");
     let fw = include_bytes!("../cyw43-firmware/43439A0.bin");
@@ -58,7 +65,7 @@ async fn main(spawner: Spawner) {
 
     let pwr = Output::new(p.PIN_23, Level::Low);
     let cs = Output::new(p.PIN_25, Level::High);
-    let mut pio = Pio::new(p.PIO0, drivers::wifi::Irqs);
+    let mut pio = Pio::new(p.PIO0, Irqs);
     let spi = PioSpi::new(
         &mut pio.common,
         pio.sm0,
@@ -160,7 +167,7 @@ async fn main(spawner: Spawner) {
     let _ = post_to_debug_server(&stack, "Waiting for stack to be up...").await;
     stack.wait_config_up().await;
     info!("Stack is up!");
-    let _ =     post_to_debug_server(&stack, "Stack is up!").await;
+    let _ = post_to_debug_server(&stack, "Stack is up!").await;
 
     // Initialize telemetry task
     let telemetry_task_config = TelemetryTaskConfig {
@@ -168,7 +175,7 @@ async fn main(spawner: Spawner) {
     };
 
     spawner
-        .spawn(telemetry_task(stack, telemetry_task_config))
+        .spawn(telemetry_task(stack, telemetry_task_config, temp_sensor))
         .unwrap();
 
     // Main loop - blink LED

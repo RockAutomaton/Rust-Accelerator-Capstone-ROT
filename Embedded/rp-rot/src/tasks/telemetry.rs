@@ -4,6 +4,7 @@ use embassy_time::{Duration, Instant, Timer};
 use embedded_io_async::Write;
 
 use crate::config::TelemetryConfig;
+use crate::drivers::TemperatureSensor;
 use crate::error::TelemetryError;
 use heapless::String;
 
@@ -11,7 +12,7 @@ pub struct TelemetryTaskConfig {
     pub interval_seconds: u32,
 }
 
-async fn send_telemetry(stack: &Stack<'_>) -> Result<(), TelemetryError> {
+async fn send_telemetry(stack: &Stack<'_>, temperature: f32) -> Result<(), TelemetryError> {
     let mut rx_buffer = [0; 1024];
     let mut tx_buffer = [0; 1024];
     let mut socket = embassy_net::tcp::TcpSocket::new(*stack, &mut rx_buffer, &mut tx_buffer);
@@ -57,12 +58,13 @@ async fn send_telemetry(stack: &Stack<'_>) -> Result<(), TelemetryError> {
         }
     }
 
-    // Prepare the telemetry data
+    // Prepare the telemetry data with actual temperature
     let mut telemetry_data = String::<256>::new();
     let _ = core::fmt::write(
         &mut telemetry_data,
         format_args!(
-            "{{\"device_id\":\"1\",\"telemetry_data\":{{\"temperature\":\"25.5\",\"humidity\":\"60.0\",\"status\":\"active\"}}}}"
+            "{{\"device_id\":\"1\",\"telemetry_data\":{{\"temperature\":\"{:.1}\",\"status\":\"active\"}}}}",
+            temperature
         ),
     );
 
@@ -122,16 +124,23 @@ async fn send_telemetry(stack: &Stack<'_>) -> Result<(), TelemetryError> {
 }
 
 #[embassy_executor::task]
-pub async fn telemetry_task(stack: Stack<'static>, config: TelemetryTaskConfig) -> ! {
+pub async fn telemetry_task(
+    stack: Stack<'static>,
+    config: TelemetryTaskConfig,
+    mut temp_sensor: TemperatureSensor,
+) -> ! {
     let mut telemetry_interval = 0;
     const TELEMETRY_SEND_EVERY: u32 = 30; // Send every 30 seconds
 
     loop {
         if telemetry_interval % TELEMETRY_SEND_EVERY == 0 {
-            info!("Sending telemetry...");
-            match send_telemetry(&stack).await {
-                Ok(_) => info!("Telemetry sent successfully"),
-                Err(e) => warn!("Failed to send telemetry: {:?}", e),
+            info!("Reading temperature and sending telemetry...");
+            match temp_sensor.read_temperature().await {
+                Ok(temperature) => match send_telemetry(&stack, temperature).await {
+                    Ok(_) => info!("Telemetry sent successfully"),
+                    Err(e) => warn!("Failed to send telemetry: {:?}", e),
+                },
+                Err(e) => warn!("Failed to read temperature: {:?}", e),
             }
         }
 
