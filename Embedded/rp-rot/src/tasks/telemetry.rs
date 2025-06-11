@@ -12,7 +12,11 @@ pub struct TelemetryTaskConfig {
     pub interval_seconds: u32,
 }
 
-async fn send_telemetry(stack: &Stack<'_>, temperature: f32) -> Result<(), TelemetryError> {
+async fn send_telemetry(
+    stack: &Stack<'_>,
+    temperature: f32,
+    voltage: f32,
+) -> Result<(), TelemetryError> {
     let mut rx_buffer = [0; 1024];
     let mut tx_buffer = [0; 1024];
     let mut socket = embassy_net::tcp::TcpSocket::new(*stack, &mut rx_buffer, &mut tx_buffer);
@@ -58,13 +62,13 @@ async fn send_telemetry(stack: &Stack<'_>, temperature: f32) -> Result<(), Telem
         }
     }
 
-    // Prepare the telemetry data with actual temperature
+    // Prepare the telemetry data with actual temperature and voltage
     let mut telemetry_data = String::<256>::new();
     let _ = core::fmt::write(
         &mut telemetry_data,
         format_args!(
-            "{{\"device_id\":\"1\",\"telemetry_data\":{{\"temperature\":\"{:.1}\",\"status\":\"active\"}}}}",
-            temperature
+            "{{\"device_id\":\"1\",\"telemetry_data\":{{\"temperature\":\"{:.1}\",\"voltage\":\"{:.2}\",\"status\":\"active\"}}}}",
+            temperature, voltage
         ),
     );
 
@@ -134,13 +138,19 @@ pub async fn telemetry_task(
 
     loop {
         if telemetry_interval % TELEMETRY_SEND_EVERY == 0 {
-            info!("Reading temperature and sending telemetry...");
-            match temp_sensor.read_temperature().await {
-                Ok(temperature) => match send_telemetry(&stack, temperature).await {
-                    Ok(_) => info!("Telemetry sent successfully"),
-                    Err(e) => warn!("Failed to send telemetry: {:?}", e),
-                },
-                Err(e) => warn!("Failed to read temperature: {:?}", e),
+            info!("Reading sensors and sending telemetry...");
+            match (
+                temp_sensor.read_temperature().await,
+                temp_sensor.read_voltage().await,
+            ) {
+                (Ok(temperature), Ok(voltage)) => {
+                    match send_telemetry(&stack, temperature, voltage).await {
+                        Ok(_) => info!("Telemetry sent successfully"),
+                        Err(e) => warn!("Failed to send telemetry: {:?}", e),
+                    }
+                }
+                (Err(e), _) => warn!("Failed to read temperature: {:?}", e),
+                (_, Err(e)) => warn!("Failed to read voltage: {:?}", e),
             }
         }
 
