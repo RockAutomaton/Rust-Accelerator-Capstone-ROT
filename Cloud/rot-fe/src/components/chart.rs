@@ -246,7 +246,6 @@ fn prepare_chart_data(telemetry_data: &[Telemetry], metric_key: &str) -> Vec<Dat
 fn get_unit_for_metric(metric_key: &str) -> String {
     match metric_key.to_lowercase().as_str() {
         "temperature" => "Temperature (°C)".to_string(),
-        "humidity" => "Humidity (%)".to_string(),
         "pressure" => "Pressure (hPa)".to_string(),
         "voltage" => "Voltage (V)".to_string(),
         _ => metric_key.to_string(),

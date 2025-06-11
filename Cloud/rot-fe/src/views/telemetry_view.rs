@@ -187,9 +187,9 @@ pub fn telemetry_view() -> Html {
                 refresh_count={*refresh_count}
             />
             <ApexChart
-                key={format!("humidity-{}-{}", *device_id, *refresh_count)}
-                metric_key="humidity"
-                title="Humidity Over Time"
+                key={format!("voltage-{}-{}", *device_id, *refresh_count)}
+                metric_key="voltage"
+                title="Voltage Over Time"
                 device_id={(*device_id).clone()}
                 refresh_count={*refresh_count}
             />
@@ -207,7 +207,6 @@ fn format_timestamp(timestamp: i64) -> String {
 fn format_value(key: &str, value: &str) -> String {
     match key.to_lowercase().as_str() {
         "temperature" => format!("{}°C", value),
-        "humidity" => format!("{}%", value),
         "pressure" => format!("{} hPa", value),
         "voltage" => format!("{}V", value),
         _ => value.to_string(),
