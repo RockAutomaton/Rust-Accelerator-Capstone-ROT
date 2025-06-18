@@ -28,7 +28,10 @@ mod tasks;
 mod utils;
 
 use drivers::{Led, TemperatureSensor};
+use tasks::config_fetch_task;
 use tasks::{cyw43_task, network_task, telemetry_task, TelemetryTaskConfig};
+use utils::config_store::get_device_config;
+use utils::config_store::init_config_store;
 use utils::debug_server::post_to_debug_server;
 
 use embassy_rp::gpio::AnyPin;
@@ -169,6 +172,12 @@ async fn main(spawner: Spawner) {
     info!("Stack is up!");
     let _ = post_to_debug_server(&stack, "Stack is up!").await;
 
+    // Initialize config store
+    init_config_store();
+
+    // Spawn config fetch task
+    spawner.spawn(config_fetch_task(stack)).unwrap();
+
     // Initialize telemetry task
     let telemetry_task_config = TelemetryTaskConfig {
         interval_seconds: 30,
@@ -178,8 +187,18 @@ async fn main(spawner: Spawner) {
         .spawn(telemetry_task(stack, telemetry_task_config, temp_sensor))
         .unwrap();
 
-    // Main loop - blink LED
+    // Main loop - poll config and set LED accordingly
     loop {
-        led.blink().await;
+        if let Some(config) = get_device_config().await {
+            if let Some(led_state) = config.config.LED.as_deref() {
+                match led_state {
+                    "on" => led.set_high(),
+                    "off" => led.set_low(),
+                    _ => { /* Optionally handle unknown state */ }
+                }
+            }
+        }
+        // Poll every second
+        Timer::after(Duration::from_secs(1)).await;
     }
 }

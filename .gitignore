@@ -189,3 +189,4 @@ Cloud/device-monitor/scripts/local-docker.sh
 **/src/generated_env.rs
 Cloud/rot-fe/scripts/local-docker.sh
 
+Cloud/device-config/scripts/local-docker.sh

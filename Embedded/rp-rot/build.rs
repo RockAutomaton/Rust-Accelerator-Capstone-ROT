@@ -35,6 +35,16 @@ fn main() {
         "YOUR_TELEMETRY_HOST".to_string()
     });
 
+    let config_host = env::var("CONFIG_HOST").unwrap_or_else(|_| {
+        println!("cargo:warning=CONFIG_HOST not set, using default");
+        "YOUR_CONFIG_HOST".to_string()
+    });
+
+    let device_id = env::var("DEVICE_ID").unwrap_or_else(|_| {
+        println!("cargo:warning=DEVICE_ID not set, using default");
+        "YOUR_DEVICE_ID".to_string()
+    });
+
     // Debug Server - optional
     let debug_server = env::var("DEBUG_SERVER").unwrap_or_else(|_| {
         println!("cargo:warning=DEBUG_SERVER not set, using default");
@@ -45,13 +55,17 @@ fn main() {
     println!("cargo:rustc-env=WIFI_NETWORK={}", wifi_network);
     println!("cargo:rustc-env=WIFI_PASSWORD={}", wifi_password);
     println!("cargo:rustc-env=TELEMETRY_HOST={}", telemetry_host);
+    println!("cargo:rustc-env=CONFIG_HOST={}", config_host);
     println!("cargo:rustc-env=DEBUG_SERVER={}", debug_server);
+    println!("cargo:rustc-env=DEVICE_ID={}", device_id);
 
     // Rebuild if .env file changes
     println!("cargo:rerun-if-changed=.env");
     println!("cargo:rerun-if-env-changed=WIFI_NETWORK");
     println!("cargo:rerun-if-env-changed=WIFI_PASSWORD");
     println!("cargo:rerun-if-env-changed=DEBUG_SERVER");
+    println!("cargo:rerun-if-env-changed=CONFIG_HOST");
+    println!("cargo:rerun-if-env-changed=DEVICE_ID");
     // Put `memory.x` in our output directory and ensure it's
     // on the linker search path.
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
