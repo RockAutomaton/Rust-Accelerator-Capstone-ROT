@@ -1,6 +1,7 @@
 // src/services/device_service.rs
 use gloo_net::http::Request;
 use crate::domain::telemetry::Telemetry;
+use crate::domain::config::DeviceConfig;
 use tracing::{info, instrument, Level};
 
 pub struct DeviceService;
@@ -54,5 +55,41 @@ impl DeviceService {
                 info!("No telemetry data found for device");
                 "No telemetry data found".to_string()
             })
+    }
+
+    #[instrument(skip_all, fields(device_id = %device_id), level = Level::INFO)]
+    pub async fn update_device_config(device_id: &str, config: &DeviceConfig) -> Result<(), String> {
+        info!("Updating device configuration");
+        
+        let base_url = env!("ROT_DC_URL").trim_end_matches('/');
+        let url = format!("{}/device-config/update", base_url);
+        info!(url = %url, "Making request to URL");
+        
+        let response = Request::post(&url)
+            .json(config)
+            .map_err(|e| {
+                info!(error = %e, "Failed to serialize config");
+                format!("JSON serialize failed: {}", e)
+            })?
+            .send()
+            .await
+            .map_err(|e| {
+                info!(error = %e, "Failed to update device config");
+                format!("Request failed: {}", e)
+            })?;
+        
+        if response.status() == 404 {
+            info!("Device not found for config update");
+            return Err("404".to_string());
+        }
+        
+        let status_code = response.status();
+        if status_code < 200 || status_code >= 300 {
+            info!(status = %status_code, "Config update failed");
+            return Err(format!("Update failed with status: {}", status_code));
+        }
+        
+        info!("Device configuration updated successfully");
+        Ok(())
     }
 }

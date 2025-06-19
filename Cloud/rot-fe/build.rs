@@ -22,6 +22,19 @@ fn main() {
         }
     };
 
+    // Try to get the Device Config URL, with a default if not set
+    let dc_url = match env::var("ROT_DC_URL") {
+        Ok(url) => {
+            println!("cargo:warning=Found ROT_DC_URL: {}", url);
+            url
+        },
+        Err(e) => {
+            println!("cargo:warning=ROT_DC_URL not found: {}. Using default.", e);
+            "http://localhost:8080".to_string()
+        }
+    };
+
     // Pass to the compiler
     println!("cargo:rustc-env=ROT_API_URL={}", api_url);
+    println!("cargo:rustc-env=ROT_DC_URL={}", dc_url);
 } 

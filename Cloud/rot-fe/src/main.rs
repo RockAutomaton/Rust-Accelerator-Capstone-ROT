@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use components::{Header, Navbar};
-use views::TelemetryView;
+use views::{TelemetryView, ConfigView};
 use tracing_wasm::WASMLayerConfigBuilder;
 use tracing_subscriber::prelude::*;
 
@@ -12,14 +12,26 @@ mod views;
 
 #[function_component]
 fn App() -> Html {
+    let current_view = use_state(|| "telemetry".to_string());
 
+    let on_nav_click = {
+        let current_view = current_view.clone();
+        Callback::from(move |view: String| {
+            current_view.set(view);
+        })
+    };
 
     html! {
         <div>
-            <Navbar />
+            <Navbar on_nav_click={on_nav_click} current_view={(*current_view).clone()} />
             <Header />
-            // <ApexChart />
-            <TelemetryView />
+            {
+                match (*current_view).as_str() {
+                    "telemetry" => html! { <TelemetryView /> },
+                    "config" => html! { <ConfigView /> },
+                    _ => html! { <TelemetryView /> },
+                }
+            }
         </div>
         
     }
