@@ -1,27 +1,63 @@
+# Device Configuration Service Package Configuration
+# 
+# This service provides a REST API for managing device configurations.
+# It uses Rocket web framework with structured logging, CORS support, and Azure Cosmos DB storage.
+
 [package]
 name = "device-config"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Web framework for building the REST API
 rocket = { version = "0.5.1", features = ["secrets", "tls", "json"] }
+
+# Serialization/deserialization for JSON handling
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.140"
+
+# Environment variable management
 dotenvy = "0.15.7"
+
+# Cross-Origin Resource Sharing support
 rocket_cors = "0.6.0"
+
+# Azure authentication and identity management
 azure_identity = "0.24.0"
 azure_security_keyvault_secrets = "0.3.0"
+
+# Async runtime for concurrent operations
 tokio = "1.45.1"
+
+# Azure Cosmos DB client for data storage
 azure_data_cosmos = { version = "0.23.0", features = ["key_auth"] }
+
+# Date/time handling with serialization support
 chrono = { version = "0.4.30", features = ["serde"] }
+
+# Azure core functionality
 azure_core = "0.24.0"    
+
+# Async programming utilities
 futures = "0.3.31"
+
+# SSL/TLS support (vendored for portability)
 openssl = { version = "0.10", features = ["vendored"] }
+
+# HTTP client for external API calls
 reqwest = { version = "0.11", features = ["json"] }
+
+# Async trait support
 async-trait = "0.1"
+
+# Structured logging and tracing
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
 tracing-error = "0.2.0"
+
+# Error handling utilities
 thiserror = "1.0.58"
 color-eyre = "0.6.3"
+
+# UUID generation for request tracking
 uuid = { version = "1.7.0", features = ["v4"] }
