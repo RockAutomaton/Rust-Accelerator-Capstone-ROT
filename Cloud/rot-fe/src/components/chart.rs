@@ -1,39 +1,54 @@
+// Import Yew framework prelude for component development
 use yew::prelude::*;
+// Import web_sys for DOM element access
 use web_sys::{window, Element};
+// Import wasm_bindgen for JS interop
 use wasm_bindgen::prelude::*;
+// Import serde_wasm_bindgen for serializing Rust data to JS values
 use serde_wasm_bindgen::to_value;
+// Import serde for struct serialization
 use serde::Serialize;
+// Import device service for fetching telemetry data
 use crate::services::device_service::DeviceService;
+// Import telemetry data model
 use crate::domain::telemetry::Telemetry;
+// Import chrono for date/time handling
 use chrono::{DateTime, Utc};
 
+// JavaScript bindings for ApexCharts library
 #[wasm_bindgen]
 extern "C" {
+    // ApexCharts type from JS
     #[wasm_bindgen(js_namespace = window, js_name = ApexCharts)]
     type ApexCharts;
     
+    // Constructor for ApexCharts
     #[wasm_bindgen(constructor, js_namespace = window, js_class = ApexCharts)]
     fn new(element: &Element, options: &JsValue) -> ApexCharts;
     
+    // Render the chart
     #[wasm_bindgen(method)]
     fn render(this: &ApexCharts);
     
+    // Destroy the chart instance
     #[wasm_bindgen(method, js_name = destroy)]
     fn destroy(this: &ApexCharts);
     
+    // Update the chart series data
     #[wasm_bindgen(method, js_name = updateSeries)]
     fn update_series(this: &ApexCharts, series: &JsValue);
 }
 
+// Chart configuration options for ApexCharts
 #[derive(Serialize)]
 struct ChartOptions {
-    chart: ChartType,
-    series: Vec<Series>,
-    xaxis: XAxis,
-    yaxis: YAxis,
-    title: Title,
-    stroke: Stroke,
-    markers: Markers,
+    chart: ChartType,      // Chart type and appearance
+    series: Vec<Series>,   // Data series to plot
+    xaxis: XAxis,          // X-axis configuration
+    yaxis: YAxis,          // Y-axis configuration
+    title: Title,          // Chart title
+    stroke: Stroke,        // Line style
+    markers: Markers,      // Marker style
 }
 
 #[derive(Serialize)]

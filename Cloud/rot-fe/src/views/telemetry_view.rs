@@ -1,74 +1,124 @@
-// src/components/telemetry_view.rs
+/// # Telemetry View
+///
+/// This component provides a view for displaying telemetry data from devices.
+/// It allows users to:
+/// - Select a device by ID
+/// - View the latest telemetry data for the device
+/// - See charts of temperature and voltage history
+/// - Refresh the data
+
 use crate::components::ApexChart;
 use crate::domain::telemetry::Telemetry;
 use crate::services::device_service::DeviceService;
 use chrono::{DateTime, Utc};
 use yew::prelude::*;
 
+/// Properties for the TelemetryView component.
 #[derive(Properties, PartialEq)]
 pub struct TelemetryViewProps {
+    /// ID of the device to display telemetry for
     pub device_id: String,
 }
 
+/// Component for displaying device telemetry data.
+///
+/// This component fetches and displays the latest telemetry data
+/// for a specified device, including numeric values and charts.
 #[function_component(TelemetryView)]
 pub fn telemetry_view() -> Html {
+    // State for the currently selected device ID
     let device_id = use_state(|| "4321".to_string());
+    
+    // State for the device ID input field
     let input_value = use_state(|| "4321".to_string());
+    
+    // State for the fetched telemetry data
     let telemetry_data = use_state(|| None::<Telemetry>);
+    
+    // State for tracking loading status
     let loading = use_state(|| true);
+    
+    // State for error messages
     let error = use_state(|| None::<String>);
+    
+    // Counter for triggering data refresh
     let refresh_count = use_state(|| 0);
 
+    // Callback for handling changes in the device ID input field
     let on_input_change = {
         let input_value = input_value.clone();
         Callback::from(move |e: InputEvent| {
+            // Get the input element and its current value
             let input: web_sys::HtmlInputElement = e.target_unchecked_into();
+            // Update the input_value state
             input_value.set(input.value());
         })
     };
 
+    // Callback for handling form submission
     let on_submit = {
         let device_id = device_id.clone();
         let input_value = input_value.clone();
         let error = error.clone();
         Callback::from(move |e: yew::events::SubmitEvent| {
+            // Prevent default form submission behavior (page reload)
             e.prevent_default();
+            
+            // Validate the input
             if input_value.trim().is_empty() {
+                // Show error if input is empty
                 error.set(Some("Please enter a device ID.".to_string()));
             } else {
+                // Update the device_id state with the input value
+                // This will trigger a data fetch via the use_effect hook
                 device_id.set((*input_value).clone());
             }
         })
     };
 
+    // Callback for handling refresh button clicks
     let refresh_count_setter = refresh_count.clone();
     let on_refresh = Callback::from(move |_| {
+        // Increment the refresh counter to trigger a data refresh
         refresh_count_setter.set(*refresh_count_setter + 1);
     });
 
+    // Effect hook for fetching telemetry data when device_id or refresh_count changes
     {
+        // Clone state variables to use in the effect closure
         let telemetry_data = telemetry_data.clone();
         let loading = loading.clone();
         let error = error.clone();
         let device_id = device_id.clone();
         let refresh_count = refresh_count.clone();
+        
+        // Set up effect that runs when device_id or refresh_count changes
         use_effect_with(((*device_id).clone(), *refresh_count), move |(device_id, _)| {
             let device_id = device_id.clone();
+            
+            // Set loading state and clear any previous errors
             loading.set(true);
             error.set(None);
 
+            // Validate device ID before making API request
             if device_id.trim().is_empty() {
                 error.set(Some("Please enter a device ID.".to_string()));
                 loading.set(false);
                 telemetry_data.set(None);
             } else {
+                // Spawn an async task to fetch the data
                 wasm_bindgen_futures::spawn_local(async move {
+                    // Call the API service to get latest telemetry
                     match DeviceService::get_latest_telemetry(&device_id).await {
+                        // Success case
                         Ok(data) => {
+                            // Update state with the fetched data
                             telemetry_data.set(Some(data));
                             loading.set(false);
                         }
+                        // Error case
                         Err(e) => {
+                            // Handle different error scenarios with user-friendly messages
                             if e.contains("No telemetry data found") {
                                 error.set(Some(
                                     "No telemetry data found for this device ID.".to_string(),
@@ -85,6 +135,8 @@ pub fn telemetry_view() -> Html {
                     }
                 });
             }
+            
+            // Cleanup function (no-op in this case)
             || ()
         });
     }
@@ -198,27 +250,54 @@ pub fn telemetry_view() -> Html {
     }
 }
 
+/// Formats a Unix timestamp into a human-readable date string.
+///
+/// # Parameters
+/// * `timestamp` - Unix timestamp (seconds since epoch)
+///
+/// # Returns
+/// * Formatted date string in "YYYY-MM-DD HH:MM:SS UTC" format
+/// * If conversion fails, returns the raw timestamp as string
 fn format_timestamp(timestamp: i64) -> String {
     DateTime::from_timestamp(timestamp, 0)
         .map(|dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string())
         .unwrap_or_else(|| format!("{}", timestamp))
 }
 
+/// Formats a telemetry value with appropriate units based on the metric type.
+///
+/// # Parameters
+/// * `key` - Name of the telemetry metric (e.g., "temperature")
+/// * `value` - Raw value as string
+///
+/// # Returns
+/// * Formatted value with appropriate units
 fn format_value(key: &str, value: &str) -> String {
     match key.to_lowercase().as_str() {
-        "temperature" => format!("{}°C", value),
-        "pressure" => format!("{} hPa", value),
-        "voltage" => format!("{}V", value),
-        _ => value.to_string(),
+        "temperature" => format!("{}°C", value),  // Add Celsius units
+        "pressure" => format!("{} hPa", value),   // Add hectopascal units
+        "voltage" => format!("{}V", value),       // Add volt units
+        _ => value.to_string(),                   // Use raw value for unknown metrics
     }
 }
 
+/// Extracts and sorts telemetry items from a Telemetry object.
+///
+/// # Parameters
+/// * `data` - Telemetry object containing sensor readings
+///
+/// # Returns
+/// * Vector of (metric_name, value) pairs, sorted alphabetically by metric name
 fn get_sorted_telemetry_items(data: &Telemetry) -> Vec<(&str, &str)> {
+    // Extract key-value pairs from the telemetry data
     let mut items: Vec<_> = data
         .telemetry_data
         .iter()
         .map(|(k, v)| (k.as_str(), v.as_str()))
         .collect();
+    
+    // Sort alphabetically by key
     items.sort_by_key(|(key, _)| *key);
+    
     items
 }
