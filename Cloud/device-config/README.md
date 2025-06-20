@@ -13,8 +13,9 @@ The Device Configuration Service provides an API for managing device configurati
 - Update device configurations
 - Azure authentication and authorization
 - Cosmos DB integration for configuration storage
-- Structured logging
+- Structured logging and request tracing
 - Docker containerization
+- CORS support for cross-origin requests
 
 ## Project Structure
 
@@ -28,30 +29,43 @@ The Device Configuration Service provides an API for managing device configurati
 
 ## API Endpoints
 
-### GET /api/config/{device_id}
+### GET /device-config/get/{device_id}
 
 Retrieves the current configuration for a specific device.
 
 Response:
 ```json
-{
-  "device_id": "device-123",
-  "led_enabled": true,
-  "reporting_interval_seconds": 60,
-  "last_updated": "2023-06-20T12:34:56Z"
-}
+[
+  {
+    "device_id": "device-123",
+    "config": {
+      "sampling_rate": "1000",
+      "threshold": "25.5",
+      "wifi_ssid": "MyNetwork"
+    }
+  }
+]
 ```
 
-### PUT /api/config/{device_id}
+### POST /device-config/update
 
 Updates the configuration for a specific device.
 
 Request:
 ```json
 {
-  "led_enabled": false,
-  "reporting_interval_seconds": 120
+  "device_id": "device-123",
+  "config": {
+    "sampling_rate": "2000",
+    "threshold": "30.0",
+    "wifi_ssid": "NewNetwork"
+  }
 }
+```
+
+Response:
+```
+Config ingested
 ```
 
 ## Local Development
@@ -60,16 +74,18 @@ Request:
 
 - Rust toolchain
 - Docker and Docker Compose
-- Azure Cosmos DB emulator or connection string
+- Azure Cosmos DB connection string
+- Azure authentication credentials
 
 ### Running locally
 
 ```bash
 # Run with environment variables
 COSMOS_ENDPOINT=<your-cosmos-endpoint> \
-COSMOS_KEY=<your-cosmos-key> \
-COSMOS_DATABASE=<your-database-name> \
-COSMOS_CONTAINER=<your-container-name> \
+AZURE_CLIENT_ID=<your-client-id> \
+AZURE_CLIENT_SECRET=<your-client-secret> \
+AZURE_TENANT_ID=<your-tenant-id> \
+SECRET_KEY=<your-secret-key> \
 cargo run
 
 # Or use the Docker script
@@ -85,9 +101,10 @@ The service is designed to be deployed as a container to Azure Container Apps. S
 The service is configured through environment variables:
 
 - `COSMOS_ENDPOINT` - Cosmos DB endpoint URL
-- `COSMOS_KEY` - Cosmos DB access key
-- `COSMOS_DATABASE` - Database name
-- `COSMOS_CONTAINER` - Container name
+- `AZURE_CLIENT_ID` - Azure AD application client ID
+- `AZURE_CLIENT_SECRET` - Azure AD application client secret
+- `AZURE_TENANT_ID` - Azure AD tenant ID
+- `SECRET_KEY` - Rocket secret key for session management
 - `RUST_LOG` - Log level (info, debug, etc.)
 
 ## Usage Example
@@ -95,13 +112,33 @@ The service is configured through environment variables:
 ### Updating device configuration
 
 ```bash
-curl -X PUT http://localhost:3001/api/config/device-123 \
+curl -X POST http://localhost:8002/device-config/update \
   -H "Content-Type: application/json" \
-  -d '{"led_enabled": true, "reporting_interval_seconds": 30}'
+  -d '{
+    "device_id": "device-123",
+    "config": {
+      "sampling_rate": "1000",
+      "threshold": "25.5"
+    }
+  }'
 ```
 
 ### Retrieving device configuration
 
 ```bash
-curl http://localhost:3001/api/config/device-123
+curl http://localhost:8002/device-config/get/device-123
 ```
+
+## Port Configuration
+
+- **Development**: Port 8002
+- **Docker**: Port 8002 (mapped to host)
+- **Container Apps**: Port 8002
+
+## Database Schema
+
+The service uses Cosmos DB with the following structure:
+- **Database**: `device-config`
+- **Container**: `config`
+- **Partition Key**: `device_id`
+- **Document Structure**: Device configuration with key-value pairs
