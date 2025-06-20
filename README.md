@@ -24,7 +24,7 @@ Consists of three microservices:
 
 - Receives telemetry data from embedded devices
 - Stores data in Azure Cosmos DB
-- Built with Axum web framework
+
 
 #### b. Device Configuration Service (`/Cloud/device-config/`)
 
@@ -90,13 +90,8 @@ Use the Azure deployment pipeline in `/Pipelines/deploy-infra.yml`
 
 - **Rust** - Used across the entire stack
 - **Embassy** - Async runtime for embedded Rust
-- **Axum** - Web framework for backend services
 - **Yew** - Rust/WASM framework for frontend
 - **Tailwind CSS** - Styling for the frontend
 - **Azure** - Cloud infrastructure
 - **Cosmos DB** - Data storage
 - **Azure Container Apps** - Service hosting
-
-## Contributing
-
-See individual component READMEs for specific development instructions.
