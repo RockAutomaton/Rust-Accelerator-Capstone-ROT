@@ -81,14 +81,16 @@ impl CosmosDbTelemetryStore {
         &self,
         document: &serde_json::Value,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        // Create a copy of the document and add a unique ID
+        // Create a copy of the document and add a unique ID and timestamp
         let mut document_with_id = document.clone();
+        let timestamp = chrono::Utc::now();
         let id = format!(
             "{}-{}",
             document["device_id"],
-            chrono::Utc::now().to_rfc3339()
+            timestamp.to_rfc3339()
         );
         document_with_id["id"] = serde_json::Value::String(id.clone());
+        document_with_id["timestamp"] = serde_json::Value::String(timestamp.to_rfc3339());
 
         // Extract device_id for use as partition key
         let device_id = document["device_id"].as_str().unwrap().to_string();

@@ -10,6 +10,8 @@ use rocket::{
     routes,
     fairing::{Fairing, Info, Kind},
     Request, Response,
+    http::Status,
+    serde::json::Json,
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
 use std::time::Instant;
@@ -73,6 +75,61 @@ impl Fairing for TracingFairing {
     }
 }
 
+/// Error response structure for API error handling
+/// 
+/// Provides a consistent error response format for all API endpoints
+#[derive(serde::Serialize)]
+struct ErrorResponse {
+    error: String,
+    message: String,
+}
+
+/// Catches JSON parsing errors and returns a proper error response
+/// 
+/// This catcher handles cases where the request body contains invalid JSON
+/// and returns a 422 Unprocessable Entity status with a descriptive error message.
+#[catch(422)]
+fn unprocessable_entity() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Unprocessable Entity".to_string(),
+        message: "Invalid JSON format or missing required fields".to_string(),
+    })
+}
+
+/// Catches bad request errors and returns a proper error response
+/// 
+/// This catcher handles cases where the request is malformed or contains
+/// invalid data that fails validation.
+#[catch(400)]
+fn bad_request() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Bad Request".to_string(),
+        message: "Invalid request data or validation failed".to_string(),
+    })
+}
+
+/// Catches internal server errors and returns a proper error response
+/// 
+/// This catcher handles unexpected server errors and database failures.
+#[catch(500)]
+fn internal_server_error() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Internal Server Error".to_string(),
+        message: "An unexpected error occurred".to_string(),
+    })
+}
+
+/// Catches not found errors and returns a proper error response
+/// 
+/// This catcher handles requests to non-existent endpoints.
+#[catch(404)]
+fn not_found() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Not Found".to_string(),
+        message: "The requested resource was not found".to_string(),
+    })
+}
+
 /// Main application structure containing the Rocket server instance
 /// 
 /// Holds the configured Rocket server along with address and port information
@@ -92,6 +149,7 @@ impl Application {
     /// 3. Sets up Rocket configuration with secret key and address
     /// 4. Attaches the application state and middleware
     /// 5. Mounts the configuration management routes
+    /// 6. Registers error catchers for proper error handling
     /// 
     /// # Arguments
     /// * `app_state` - The application state containing database connections and other shared resources
@@ -122,6 +180,13 @@ impl Application {
             .attach(cors)
             // Add request/response tracing for observability
             .attach(TracingFairing)
+            // Register error catchers for proper error handling
+            .register("/", catchers![
+                unprocessable_entity,
+                bad_request,
+                internal_server_error,
+                not_found,
+            ])
             // Mount the configuration management endpoints
             .mount("/device-config", routes![
                 routes::update_config::update_config_route,

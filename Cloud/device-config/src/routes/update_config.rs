@@ -8,7 +8,7 @@ use rocket::{State, http::Status};
 use tracing::{info, error};
 
 use crate::domain::config::Config;
-use crate::domain::error::ConfigError; 
+use crate::domain::config::ConfigError;
 use crate::app_state::AppState;
 
 /// Processes and stores configuration data in the database
@@ -35,9 +35,10 @@ async fn update_config(state: &AppState, config: Json<Config>) -> Result<(), Con
 
     ).map_err(|e| match e {
         // Map domain validation errors to configuration errors
-        crate::domain::error::ConfigError::InvalidDeviceId => ConfigError::InvalidDeviceId,
-        crate::domain::error::ConfigError::InvalidConfig => ConfigError::InvalidConfig,
-        crate::domain::error::ConfigError::DatabaseError(e) => ConfigError::DatabaseError(e),
+        crate::domain::config::ConfigError::InvalidDeviceId => ConfigError::InvalidDeviceId,
+        crate::domain::config::ConfigError::InvalidConfig => ConfigError::InvalidConfig,
+        crate::domain::config::ConfigError::DatabaseError(e) => ConfigError::DatabaseError(e),
+        crate::domain::config::ConfigError::DeviceNotFound(device_id) => ConfigError::DeviceNotFound(device_id),
     })?;
 
     // Convert the validated configuration to JSON format for database storage
@@ -80,7 +81,7 @@ async fn update_config(state: &AppState, config: Json<Config>) -> Result<(), Con
 /// ```
 /// 
 /// # Example Response
-/// ```
+/// ```text
 /// Config ingested
 /// ```
 #[post("/update", data = "<config>")]

@@ -31,7 +31,12 @@ use std::sync::Arc;
 /// 
 /// # Example
 /// ```rust
-/// init_tracing()?;
+/// use device_config::utils::init_tracing;
+/// 
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     init_tracing()?;
+///     Ok(())
+/// }
 /// ```
 pub fn init_tracing() -> Result<()> {
     // Create a formatting layer for tracing output with a compact format

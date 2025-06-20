@@ -69,7 +69,7 @@ async fn read_telemetry(
 /// * `Result<Json<Vec<Telemetry>>, Status>` - JSON array of telemetry records or HTTP error status
 /// 
 /// # Example Request
-/// ```
+/// ```bash
 /// GET /iot/data/read/sensor-001
 /// ```
 /// 

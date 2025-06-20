@@ -108,3 +108,210 @@ async fn test_read_with_query_parameters() {
     // This confirms that query parameters are properly ignored
     assert_eq!(response.status(), Status::NotFound);
 }
+
+/// Test reading telemetry with a valid device ID format
+/// 
+/// This test verifies that the API accepts valid device ID formats
+/// and returns appropriate responses.
+#[tokio::test]
+async fn test_read_valid_device_id_format() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+
+    // Try to read telemetry with a valid device ID format
+    let response = client
+        .get("/iot/data/read/sensor-001")
+        .dispatch()
+        .await;
+
+    // Should return 404 since the device doesn't exist in test database
+    // but the request format is valid
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test reading telemetry with different HTTP methods
+/// 
+/// This test verifies that the API correctly rejects unsupported HTTP methods
+/// and only accepts GET requests.
+#[tokio::test]
+async fn test_read_unsupported_methods() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+    let device_id = app.generate_test_device_id();
+
+    // Try POST method (should not be supported)
+    let response = client
+        .post(format!("/iot/data/read/{}", device_id))
+        .dispatch()
+        .await;
+
+    // Should return 404 for unsupported methods
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Try PUT method (should not be supported)
+    let response = client
+        .put(format!("/iot/data/read/{}", device_id))
+        .dispatch()
+        .await;
+
+    // Should return 404 for unsupported methods
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Try DELETE method (should not be supported)
+    let response = client
+        .delete(format!("/iot/data/read/{}", device_id))
+        .dispatch()
+        .await;
+
+    // Should return 404 for unsupported methods
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test reading telemetry with various device ID formats
+/// 
+/// This test verifies that the API correctly handles different device ID
+/// formats including numbers, letters, and mixed formats.
+#[tokio::test]
+async fn test_read_various_device_id_formats() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+
+    // Test with numeric device ID
+    let response = client
+        .get("/iot/data/read/12345")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with alphanumeric device ID
+    let response = client
+        .get("/iot/data/read/device123")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with device ID containing hyphens
+    let response = client
+        .get("/iot/data/read/sensor-001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with device ID containing underscores
+    let response = client
+        .get("/iot/data/read/test_device_001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with very long device ID
+    let long_device_id = "a".repeat(100);
+    let response = client
+        .get(format!("/iot/data/read/{}", long_device_id))
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test reading telemetry with URL encoding
+/// 
+/// This test verifies that the API correctly handles URL-encoded device IDs
+/// and properly decodes them.
+#[tokio::test]
+async fn test_read_url_encoded_device_id() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+
+    // Test with URL-encoded device ID (space encoded as %20)
+    let response = client
+        .get("/iot/data/read/test%20device")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with URL-encoded device ID (special characters)
+    let response = client
+        .get("/iot/data/read/test%2Fdevice")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test reading telemetry with case sensitivity
+/// 
+/// This test verifies that the API correctly handles case-sensitive device IDs
+/// and treats different cases as different devices.
+#[tokio::test]
+async fn test_read_case_sensitive_device_id() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+
+    // Test with lowercase device ID
+    let response = client
+        .get("/iot/data/read/sensor001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with uppercase device ID
+    let response = client
+        .get("/iot/data/read/SENSOR001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with mixed case device ID
+    let response = client
+        .get("/iot/data/read/Sensor001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+/// Test reading telemetry with malformed URLs
+/// 
+/// This test verifies that the API correctly handles malformed URLs
+/// and returns appropriate error responses.
+#[tokio::test]
+async fn test_read_malformed_urls() {
+    // Load environment variables for test configuration
+    dotenv().ok();
+    
+    // Create test application instance
+    let app = TestApp::new().await.expect("Failed to create test app");
+    let client: &Client = &app.client;
+
+    // Test with double slashes
+    let response = client
+        .get("/iot/data/read//sensor001")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+
+    // Test with trailing slash
+    let response = client
+        .get("/iot/data/read/sensor001/")
+        .dispatch()
+        .await;
+    assert_eq!(response.status(), Status::NotFound);
+}

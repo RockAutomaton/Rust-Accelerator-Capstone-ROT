@@ -8,7 +8,7 @@ use rocket::{State, http::Status};
 use tracing::{info, error};
 
 use crate::domain::config::Config;
-use crate::domain::error::ConfigError; 
+use crate::domain::config::ConfigError;
 use crate::app_state::AppState;
 
 /// Retrieves configuration data for a specific device from the database
@@ -31,6 +31,11 @@ async fn get_config(state: &AppState, device_id: String) -> Result<Vec<Config>, 
         .await
         .map_err(|e| ConfigError::DatabaseError(e.to_string()))?;
 
+    // Return 404 if no configuration data is found for the device
+    if config.is_empty() {
+        return Err(ConfigError::DeviceNotFound(device_id));
+    }
+
     info!("Config retrieved successfully");
     Ok(config)
 }
@@ -49,7 +54,7 @@ async fn get_config(state: &AppState, device_id: String) -> Result<Vec<Config>, 
 /// * `Result<Json<Vec<Config>>, Status>` - JSON array of configurations or HTTP error status
 /// 
 /// # Example Request
-/// ```
+/// ```bash
 /// GET /device-config/get/sensor-001
 /// ```
 /// 
